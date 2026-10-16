@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Project, Task, TaskConstraint } from '../model/types';
 import { normalizeProject } from '../model/migrate';
 import { WorkCalendar, defaultCalendar } from './calendar';
-import { computeWbs, formatPredecessors, parsePredecessors, schedule } from './schedule';
+import { computeWbs, formatPredecessors, linkError, parsePredecessors, schedule } from './schedule';
 
 function task(id: string, name: string, durationDays: number, level = 0, constraint: TaskConstraint = { type: 'ASAP', date: null }): Task {
   return { id, name, level, durationDays, constraint, percentComplete: 0, notes: '' };
@@ -303,5 +303,21 @@ describe('predecesoras', () => {
       ],
     );
     expect(formatPredecessors(p, 'c')).toBe('1+2d;2CC');
+  });
+});
+
+describe('vincular tareas desde la Gantt', () => {
+  const p = project([task('s', 'Fase', 0, 0), task('a', 'A', 2, 1), task('b', 'B', 2, 1), task('c', 'C', 1, 0)], [fs('d1', 'a', 'b')]);
+
+  it('acepta un vínculo nuevo válido', () => {
+    expect(linkError(p, 'b', 'c')).toBeNull();
+  });
+
+  it('rechaza la misma tarea, los repetidos, los ciclos y resumen con subtarea', () => {
+    expect(linkError(p, 'a', 'a')).toMatch(/sí misma/);
+    expect(linkError(p, 'a', 'b')).toMatch(/ya están vinculadas/);
+    expect(linkError(p, 'b', 'a')).toMatch(/ciclo/);
+    expect(linkError(p, 's', 'a')).toMatch(/resumen/);
+    expect(linkError(p, 'a', 's')).toMatch(/resumen/);
   });
 });

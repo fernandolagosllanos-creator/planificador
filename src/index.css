@@ -458,3 +458,69 @@ button.link {
   cursor: pointer;
   padding: 0;
 }
+
+/* Gantt interactiva */
+.gantt-bar .bar,
+.gantt-milestone-g {
+  cursor: grab;
+}
+.gantt.dragging-move,
+.gantt.dragging-move * {
+  cursor: grabbing !important;
+}
+.gantt.dragging-resize,
+.gantt.dragging-resize * {
+  cursor: ew-resize !important;
+}
+.gantt.dragging-link,
+.gantt.dragging-link * {
+  cursor: crosshair !important;
+}
+.gantt-bar .resize {
+  fill: transparent;
+  cursor: ew-resize;
+}
+.gantt .handle {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  opacity: 0;
+  cursor: crosshair;
+}
+.gantt-bar:hover .handle,
+.gantt-milestone-g:hover .handle,
+.gantt.dragging-link .handle {
+  opacity: 1;
+}
+.gantt-row.link-target {
+  fill: #dcfce7;
+}
+.gantt-arrow .hit {
+  stroke: transparent;
+  stroke-width: 9;
+  fill: none;
+  cursor: pointer;
+}
+.gantt-arrow:hover path:not(.hit) {
+  stroke-width: 2.4;
+}
+.gantt-ghost rect {
+  fill: var(--accent);
+  opacity: 0.35;
+  stroke: var(--accent);
+  stroke-dasharray: 3 2;
+}
+.gantt-ghost text,
+.gantt-linking text {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--accent);
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3;
+}
+.gantt-linking line {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}

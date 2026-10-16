@@ -380,3 +380,20 @@ export function parsePredecessors(text: string): ParsedPredecessor[] {
   }
   return out;
 }
+
+/**
+ * Comprueba si se puede vincular `from` → `to`. Devuelve el motivo en español
+ * cuando no se puede (misma tarea, vínculo repetido, tarea dentro de su propio
+ * resumen o ciclo de dependencias) y null cuando sí.
+ */
+export function linkError(project: Project, from: string, to: string, type: DependencyType = 'FS'): string | null {
+  if (from === to) return 'Una tarea no puede ser predecesora de sí misma';
+  const rowOf = new Map(project.tasks.map((t, i) => [t.id, i + 1]));
+  if (!rowOf.has(from) || !rowOf.has(to)) return 'La tarea no existe';
+  if (subtreeIds(project.tasks, from).includes(to) || subtreeIds(project.tasks, to).includes(from))
+    return 'No se puede vincular una tarea resumen con una de sus subtareas';
+  if (project.dependencies.some((d) => d.from === from && d.to === to)) return `Las tareas ${rowOf.get(from)} y ${rowOf.get(to)} ya están vinculadas`;
+  const trial: Project = { ...project, dependencies: [...project.dependencies, { id: '__trial', from, to, type, lagDays: 0 }] };
+  if (schedule(trial).cycle.length) return `Vincular ${rowOf.get(from)} → ${rowOf.get(to)} crearía un ciclo de dependencias`;
+  return null;
+}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useProject, type Zoom } from '../store/project';
 import { CalendarDialog } from './CalendarDialog';
+import { today } from '../engine/calendar';
 import { openProjectFile, saveProjectFile } from '../file/planif';
 
 export function Toolbar() {
@@ -93,6 +94,12 @@ export function Toolbar() {
             <option value="month">Meses</option>
           </select>
         </label>
+        <button onClick={() => s.goToDate(today())} title="Desplazar la Gantt hasta la fecha de hoy">
+          Hoy
+        </button>
+        <button onClick={() => s.goToDate(s.project.start)} title="Desplazar la Gantt hasta el inicio del proyecto">
+          Inicio
+        </button>
       </div>
       <div className="spacer" />
       <div className="group project-meta">

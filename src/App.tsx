@@ -97,7 +97,10 @@ export default function App() {
         <span>Inicio: {fmt(result.projectStart)}</span>
         <span>Fin: {fmt(result.projectFinish)}</span>
         <span>{s.filePath ? s.filePath : 'Sin guardar en archivo'}</span>
-        <span className="hint">Doble clic en una celda para editar · Predecesoras: ej. 3FC+2d;5CC</span>
+        <span className="hint">
+          Doble clic para editar · Arrastra una barra para moverla, su borde derecho para alargarla y el punto de un extremo hasta otra barra para
+          vincular
+        </span>
       </div>
     </div>
   );

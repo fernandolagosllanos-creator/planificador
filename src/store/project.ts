@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Calendar, Dependency, ISODate, Project, Task, TaskConstraint } from '../model/types';
 import { defaultCalendar, today } from '../engine/calendar';
-import { parsePredecessors, subtreeIds } from '../engine/schedule';
+import { linkError, parsePredecessors, subtreeIds } from '../engine/schedule';
 
 export type Zoom = 'day' | 'week' | 'month';
 
@@ -94,12 +94,15 @@ export interface ProjectState {
   dirty: boolean;
   selectedId: string | null;
   zoom: Zoom;
+  /** Petición de desplazar la Gantt hasta una fecha; `n` cambia en cada petición. */
+  scrollTo: { date: ISODate; n: number } | null;
   past: HistoryEntry[];
   future: HistoryEntry[];
   error: string | null;
 
   select: (id: string | null) => void;
   setZoom: (z: Zoom) => void;
+  goToDate: (date: ISODate) => void;
   setError: (msg: string | null) => void;
 
   /** Aplica una mutación registrándola en el historial de deshacer. */
@@ -113,6 +116,9 @@ export interface ProjectState {
   setConstraint: (id: string, constraint: TaskConstraint) => void;
   updateCalendar: (calendar: Calendar) => void;
   setPredecessors: (id: string, text: string) => void;
+  /** Crea un vínculo fin-comienzo; devuelve false (y deja un error) si no es válido. */
+  addDependency: (from: string, to: string, type?: Dependency['type']) => boolean;
+  removeDependency: (id: string) => void;
   addTaskAfter: (id: string | null) => string;
   deleteTask: (id: string) => void;
   indent: (id: string) => void;
@@ -134,12 +140,14 @@ export const useProject = create<ProjectState>((set, get) => ({
   dirty: false,
   selectedId: null,
   zoom: 'week',
+  scrollTo: null,
   past: [],
   future: [],
   error: null,
 
   select: (id) => set({ selectedId: id }),
   setZoom: (zoom) => set({ zoom }),
+  goToDate: (date) => set({ scrollTo: { date, n: (get().scrollTo?.n ?? 0) + 1 } }),
   setError: (error) => set({ error }),
 
   mutate: (fn) => {
@@ -216,6 +224,18 @@ export const useProject = create<ProjectState>((set, get) => ({
       }
     });
   },
+
+  addDependency: (from, to, type = 'FS') => {
+    const err = linkError(get().project, from, to, type);
+    if (err) {
+      set({ error: err });
+      return false;
+    }
+    get().mutate((p) => void p.dependencies.push({ id: uid(), from, to, type, lagDays: 0 }));
+    return true;
+  },
+
+  removeDependency: (id) => get().mutate((p) => void (p.dependencies = p.dependencies.filter((d) => d.id !== id))),
 
   addTaskAfter: (id) => {
     const t = newTask();
