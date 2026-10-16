@@ -2,6 +2,7 @@ import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import type { Project } from '../model/types';
 import { PLANIF_FORMAT, PLANIF_SCHEMA_VERSION } from '../model/types';
 import { schedule } from '../engine/schedule';
+import { normalizeProject } from '../model/migrate';
 
 export const APP_VERSION = '0.1.0';
 export const FILE_EXTENSION = 'planif';
@@ -48,8 +49,7 @@ export function deserializeProject(bytes: Uint8Array): Project {
 }
 
 function migrate(project: Project, _fromVersion: number): Project {
-  // Aquí irán las migraciones cuando cambie el esquema.
-  return project;
+  return normalizeProject(project);
 }
 
 // ---------------------------------------------------------------------------
@@ -140,7 +140,7 @@ export function autosave(project: Project): void {
 export function loadAutosave(): Project | null {
   try {
     const raw = localStorage.getItem(AUTOSAVE_KEY);
-    return raw ? (JSON.parse(raw) as Project) : null;
+    return raw ? normalizeProject(JSON.parse(raw) as Project) : null;
   } catch {
     return null;
   }

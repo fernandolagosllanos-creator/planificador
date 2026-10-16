@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Gantt } from './components/Gantt';
+import { TaskDetail } from './components/TaskDetail';
 import { TaskTable } from './components/TaskTable';
 import { Toolbar } from './components/Toolbar';
 import { schedule } from './engine/schedule';
@@ -90,6 +91,7 @@ export default function App() {
           <Gantt result={result} />
         </div>
       </div>
+      <TaskDetail result={result} />
       <div className="statusbar">
         <span>{s.project.tasks.length} tareas</span>
         <span>Inicio: {fmt(result.projectStart)}</span>

@@ -30,6 +30,42 @@ export interface Calendar {
   holidays: { date: ISODate; name: string }[];
 }
 
+/**
+ * Restricciones de programación, con los mismos tipos que Microsoft Project:
+ * ASAP lo antes posible, ALAP lo más tarde posible, SNET no comenzar antes del,
+ * SNLT no comenzar después del, FNET no finalizar antes del, FNLT no finalizar
+ * después del, MSO debe comenzar el, MFO debe finalizar el.
+ */
+export type ConstraintType = 'ASAP' | 'ALAP' | 'SNET' | 'SNLT' | 'FNET' | 'FNLT' | 'MSO' | 'MFO';
+
+export const CONSTRAINT_LABEL_ES: Record<ConstraintType, string> = {
+  ASAP: 'Lo antes posible',
+  ALAP: 'Lo más tarde posible',
+  SNET: 'No comenzar antes del',
+  SNLT: 'No comenzar después del',
+  FNET: 'No finalizar antes del',
+  FNLT: 'No finalizar después del',
+  MSO: 'Debe comenzar el',
+  MFO: 'Debe finalizar el',
+};
+
+/** Restricciones que necesitan una fecha. */
+export const CONSTRAINT_NEEDS_DATE: Record<ConstraintType, boolean> = {
+  ASAP: false,
+  ALAP: false,
+  SNET: true,
+  SNLT: true,
+  FNET: true,
+  FNLT: true,
+  MSO: true,
+  MFO: true,
+};
+
+export interface TaskConstraint {
+  type: ConstraintType;
+  date: ISODate | null;
+}
+
 export interface Task {
   id: string;
   name: string;
@@ -37,10 +73,11 @@ export interface Task {
   level: number;
   /** Duración en días laborales. 0 = hito. */
   durationDays: number;
-  /** Inicio fijado por el usuario, usado solo cuando la tarea no tiene predecesoras. */
-  manualStart: ISODate | null;
+  constraint: TaskConstraint;
   percentComplete: number;
   notes: string;
+  /** Solo en archivos de esquema 1: inicio fijado a mano. Se migra a una restricción SNET. */
+  manualStart?: ISODate | null;
 }
 
 export interface Dependency {
@@ -74,9 +111,14 @@ export interface ScheduledTask {
   isSummary: boolean;
   isMilestone: boolean;
   percentComplete: number;
-  /** Holgura total en días laborales (solo tareas hoja). */
+  /** Holgura total en días laborales (solo tareas hoja). Negativa si una restricción no se puede cumplir. */
   slackDays: number;
+  /** Comienzo y fin más tardíos que no atrasan el proyecto (solo tareas hoja). */
+  lateStart: ISODate;
+  lateFinish: ISODate;
   isCritical: boolean;
+  /** La restricción de la tarea choca con sus predecesoras o con otra restricción. */
+  constraintConflict: boolean;
   /** Número de fila (1-based), equivale al "Id" de Project. */
   row: number;
   level: number;
@@ -84,4 +126,4 @@ export interface ScheduledTask {
 }
 
 export const PLANIF_FORMAT = 'planif';
-export const PLANIF_SCHEMA_VERSION = 1;
+export const PLANIF_SCHEMA_VERSION = 2;

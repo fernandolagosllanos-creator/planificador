@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ScheduleResult } from '../engine/schedule';
+import type { Task } from '../model/types';
 import { computeWbs, formatPredecessors } from '../engine/schedule';
+import { CONSTRAINT_LABEL_ES } from '../model/types';
 import { useProject } from '../store/project';
 import { ROW_HEIGHT } from './layout';
 
@@ -10,6 +12,7 @@ interface Props {
 
 export const TABLE_COLUMNS = [
   { key: 'row', label: '', width: 36 },
+  { key: 'ind', label: '', width: 24 },
   { key: 'wbs', label: 'EDT', width: 56 },
   { key: 'name', label: 'Nombre de tarea', width: 260 },
   { key: 'duration', label: 'Duración', width: 80 },
@@ -41,6 +44,7 @@ export function TaskTable({ result }: Props) {
   const select = useProject((s) => s.select);
   const updateTask = useProject((s) => s.updateTask);
   const setPredecessors = useProject((s) => s.setPredecessors);
+  const setConstraint = useProject((s) => s.setConstraint);
   const setError = useProject((s) => s.setError);
   const wbs = computeWbs(project.tasks);
 
@@ -96,6 +100,9 @@ export function TaskTable({ result }: Props) {
               <td className="row-num" onClick={() => select(t.id)}>
                 {i + 1}
               </td>
+              <td className="indicator" onClick={() => select(t.id)} title={indicatorTitle(t.constraint, s.constraintConflict)}>
+                {s.constraintConflict ? '⚠' : t.constraint && t.constraint.date ? '📌' : ''}
+              </td>
               <td className="wbs" onClick={() => select(t.id)}>
                 {wbs.get(t.id)}
               </td>
@@ -116,13 +123,22 @@ export function TaskTable({ result }: Props) {
                 (v) => {
                   const iso = parseUserDate(v);
                   if (!iso) setError('Fecha no válida. Usa el formato dd-mm-aaaa');
-                  else if (project.dependencies.some((d) => d.to === t.id))
-                    setError('Esta tarea tiene predecesoras; su inicio lo determinan ellas. Quita las predecesoras para fijar la fecha.');
-                  else updateTask(t.id, { manualStart: iso });
+                  // Como en Project: escribir un comienzo fija "No comenzar antes del".
+                  else setConstraint(t.id, { type: 'SNET', date: iso });
                 },
                 { editable: !s.isSummary },
               )}
-              {cell('finish', fmt(s.finish), () => {}, { editable: false })}
+              {cell(
+                'finish',
+                fmt(s.finish),
+                (v) => {
+                  const iso = parseUserDate(v);
+                  if (!iso) setError('Fecha no válida. Usa el formato dd-mm-aaaa');
+                  // Escribir un fin fija "No finalizar antes del".
+                  else setConstraint(t.id, { type: 'FNET', date: iso });
+                },
+                { editable: !s.isSummary },
+              )}
               {cell('preds', formatPredecessors(project, t.id), (v) => setPredecessors(t.id, v))}
               {cell(
                 'pct',
@@ -140,6 +156,12 @@ export function TaskTable({ result }: Props) {
       </tbody>
     </table>
   );
+}
+
+function indicatorTitle(c: Task['constraint'] | undefined, conflict: boolean): string | undefined {
+  if (!c || !c.date) return undefined;
+  const text = `${CONSTRAINT_LABEL_ES[c.type]} ${fmt(c.date)}`;
+  return conflict ? `${text}. La restricción no se puede cumplir con las predecesoras actuales.` : text;
 }
 
 function CellEditor({ value, onCommit, onCancel }: { value: string; onCommit: (v: string) => void; onCancel: () => void }) {

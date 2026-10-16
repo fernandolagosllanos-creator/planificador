@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Dependency, ISODate, Project, Task } from '../model/types';
+import type { Calendar, Dependency, ISODate, Project, Task, TaskConstraint } from '../model/types';
 import { defaultCalendar, today } from '../engine/calendar';
 import { parsePredecessors, subtreeIds } from '../engine/schedule';
 
@@ -17,7 +17,7 @@ export function newTask(partial: Partial<Task> = {}): Task {
     name: 'Nueva tarea',
     level: 0,
     durationDays: 1,
-    manualStart: null,
+    constraint: { type: 'ASAP', date: null },
     percentComplete: 0,
     notes: '',
     ...partial,
@@ -78,6 +78,7 @@ export function sampleProject(): Project {
     d(9, 13),
     d(12, 13),
   ];
+  tasks[13].constraint = { type: 'FNLT', date: '2027-02-12' };
   tasks[1].percentComplete = 100;
   tasks[2].percentComplete = 60;
   return p;
@@ -109,6 +110,8 @@ export interface ProjectState {
   setProjectName: (name: string) => void;
   setProjectStart: (start: ISODate) => void;
   updateTask: (id: string, patch: Partial<Task>) => void;
+  setConstraint: (id: string, constraint: TaskConstraint) => void;
+  updateCalendar: (calendar: Calendar) => void;
   setPredecessors: (id: string, text: string) => void;
   addTaskAfter: (id: string | null) => string;
   deleteTask: (id: string) => void;
@@ -173,6 +176,17 @@ export const useProject = create<ProjectState>((set, get) => ({
     get().mutate((p) => {
       const t = p.tasks.find((x) => x.id === id);
       if (t) Object.assign(t, patch);
+    }),
+
+  setConstraint: (id, constraint) =>
+    get().mutate((p) => {
+      const t = p.tasks.find((x) => x.id === id);
+      if (t) t.constraint = constraint;
+    }),
+
+  updateCalendar: (calendar) =>
+    get().mutate((p) => {
+      p.calendars = p.calendars.map((c) => (c.id === calendar.id ? calendar : c));
     }),
 
   setPredecessors: (id, text) => {

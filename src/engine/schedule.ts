@@ -57,33 +57,75 @@ export function computeWbs(tasks: Task[]): Map<string, string> {
   return wbs;
 }
 
-function shiftByType(
-  cal: WorkCalendar,
-  type: DependencyType,
-  pred: { start: ISODate; finish: ISODate },
-  lagDays: number,
-  succDuration: number,
-): ISODate {
-  const span = Math.max(succDuration - 1, 0);
+/** Posición temprana de una tarea hoja. `eod` indica que el fin ocurre al terminar el día (siempre, salvo hitos al comienzo del día). */
+interface Placement {
+  start: ISODate;
+  finish: ISODate;
+  eod: boolean;
+}
+
+const spanOf = (dur: number) => Math.max(dur - 1, 0);
+
+/** Días laborales que separan el fin de la predecesora del comienzo de la sucesora en un vínculo FC. */
+const fsOffset = (pred: Placement, succDur: number, lag: number) => (pred.eod && succDur > 0 ? 1 : 0) + lag;
+
+/** Ubicación de la sucesora que exige un vínculo, sin considerar otras predecesoras. */
+function placeBySuccessorLink(cal: WorkCalendar, type: DependencyType, pred: Placement, lag: number, dur: number): Placement {
+  const span = spanOf(dur);
   switch (type) {
-    case 'FS':
-      return cal.addWorkingDays(pred.finish, 1 + lagDays);
-    case 'SS':
-      return cal.addWorkingDays(pred.start, lagDays);
+    case 'FS': {
+      const start = cal.addWorkingDays(pred.finish, fsOffset(pred, dur, lag));
+      return { start, finish: cal.addWorkingDays(start, span), eod: dur > 0 || pred.eod };
+    }
+    case 'SS': {
+      const start = cal.addWorkingDays(pred.start, lag);
+      return { start, finish: cal.addWorkingDays(start, span), eod: dur > 0 };
+    }
     case 'FF': {
-      const finish = cal.addWorkingDays(pred.finish, lagDays);
-      return cal.addWorkingDays(finish, -span);
+      const finish = cal.addWorkingDays(pred.finish, lag);
+      return { start: cal.addWorkingDays(finish, -span), finish, eod: dur > 0 || pred.eod };
     }
     case 'SF': {
-      const finish = cal.addWorkingDays(pred.start, lagDays - 1);
-      return cal.addWorkingDays(finish, -span);
+      const finish = cal.addWorkingDays(pred.start, lag - 1);
+      return { start: cal.addWorkingDays(finish, -span), finish, eod: true };
     }
+  }
+}
+
+/** Orden en el tiempo de dos ubicaciones (un hito al final del día va después de uno al comienzo). */
+function laterThan(a: Placement, b: Placement): boolean {
+  if (a.start !== b.start) return a.start > b.start;
+  return a.eod && !b.eod;
+}
+
+/** Fin más tardío que puede tener la predecesora para no atrasar a la sucesora ubicada en `succ`. */
+function latestPredFinish(
+  cal: WorkCalendar,
+  type: DependencyType,
+  pred: Placement,
+  predDur: number,
+  succ: { start: ISODate; finish: ISODate },
+  succDur: number,
+  lag: number,
+): ISODate {
+  const span = spanOf(predDur);
+  switch (type) {
+    case 'FS':
+      return cal.addWorkingDays(succ.start, -fsOffset(pred, succDur, lag));
+    case 'SS':
+      return cal.addWorkingDays(cal.addWorkingDays(succ.start, -lag), span);
+    case 'FF':
+      return cal.addWorkingDays(succ.finish, -lag);
+    case 'SF':
+      return cal.addWorkingDays(cal.addWorkingDays(succ.finish, 1 - lag), span);
   }
 }
 
 /**
  * Motor de programación: calcula inicio y fin de cada tarea respetando el
- * calendario, las dependencias y la jerarquía, y marca la ruta crítica.
+ * calendario, las dependencias, las restricciones y la jerarquía, y marca la
+ * ruta crítica. Como Project, las restricciones con fecha se respetan aunque
+ * choquen con las predecesoras; en ese caso la tarea queda marcada con conflicto.
  */
 export function schedule(project: Project): ScheduleResult {
   const calDef = project.calendars.find((c) => c.id === project.calendarId) ?? project.calendars[0];
@@ -93,6 +135,7 @@ export function schedule(project: Project): ScheduleResult {
   const children = computeChildren(tasks);
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const isSummary = (id: string) => (children.get(id)?.length ?? 0) > 0;
+  const durOf = (id: string) => Math.max(0, Math.round(byId.get(id)!.durationDays));
 
   // Las dependencias sobre tareas resumen se propagan a sus hojas.
   const leaves = (id: string): string[] =>
@@ -129,84 +172,134 @@ export function schedule(project: Project): ScheduleResult {
       if (indeg.get(s.to) === 0) queue.push(s.to);
     }
   }
-  const cycle = leafIds.filter((id) => !topo.includes(id));
+  const inTopo = new Set(topo);
+  const cycle = leafIds.filter((id) => !inTopo.has(id));
 
   const projStart = cal.nextWorkingDay(project.start);
-  const result = new Map<string, ScheduledTask>();
-  const early = new Map<string, { start: ISODate; finish: ISODate }>();
+  const early = new Map<string, Placement>();
+  const conflict = new Set<string>();
 
   // Pasada hacia adelante.
   for (const id of [...topo, ...cycle]) {
     const t = byId.get(id)!;
-    const dur = Math.max(0, Math.round(t.durationDays));
-    let start: ISODate;
-    const ps = preds.get(id)!.filter((p) => early.has(p.from));
-    if (ps.length === 0) {
-      start = cal.nextWorkingDay(t.manualStart ?? projStart);
-    } else {
-      start = projStart;
-      let first = true;
-      for (const p of ps) {
-        const s = shiftByType(cal, p.dep.type, early.get(p.from)!, p.dep.lagDays, dur);
-        start = first ? s : maxDate(start, s);
-        first = false;
+    const dur = durOf(id);
+    const span = spanOf(dur);
+    let p: Placement = { start: projStart, finish: cal.addWorkingDays(projStart, span), eod: dur > 0 };
+    for (const pr of preds.get(id)!) {
+      const pe = early.get(pr.from);
+      if (!pe) continue;
+      const cand = placeBySuccessorLink(cal, pr.dep.type, pe, pr.dep.lagDays, dur);
+      if (laterThan(cand, p)) p = cand;
+    }
+    const c = t.constraint;
+    if (c && c.date && c.type !== 'ASAP' && c.type !== 'ALAP') {
+      const atStart = (d: ISODate): Placement => {
+        const start = cal.nextWorkingDay(d);
+        return { start, finish: cal.addWorkingDays(start, span), eod: dur > 0 };
+      };
+      const atFinish = (d: ISODate): Placement => {
+        const finish = cal.prevWorkingDay(d);
+        return { start: cal.addWorkingDays(finish, -span), finish, eod: true };
+      };
+      switch (c.type) {
+        case 'SNET': {
+          const q = atStart(c.date);
+          if (laterThan(q, p)) p = q;
+          break;
+        }
+        case 'FNET': {
+          const q = atFinish(c.date);
+          if (q.finish > p.finish) p = q;
+          break;
+        }
+        case 'SNLT': {
+          const q = atStart(c.date);
+          if (laterThan(p, q)) {
+            conflict.add(id);
+            p = q;
+          }
+          break;
+        }
+        case 'FNLT': {
+          const q = atFinish(c.date);
+          if (p.finish > q.finish) {
+            conflict.add(id);
+            p = q;
+          }
+          break;
+        }
+        case 'MSO': {
+          const q = atStart(c.date);
+          if (laterThan(p, q)) conflict.add(id);
+          p = q;
+          break;
+        }
+        case 'MFO': {
+          const q = atFinish(c.date);
+          if (p.finish > q.finish) conflict.add(id);
+          p = q;
+          break;
+        }
       }
     }
-    const finish = dur === 0 ? start : cal.addWorkingDays(start, dur - 1);
-    early.set(id, { start, finish });
+    early.set(id, p);
   }
 
   let projectFinish = projStart;
   for (const v of early.values()) projectFinish = maxDate(projectFinish, v.finish);
 
-  // Pasada hacia atrás (holgura total) sobre fechas de fin tardías.
+  // Pasada hacia atrás: fin más tardío de cada hoja.
   const lateFinish = new Map<string, ISODate>();
+  const lateStartOf = (id: string) => cal.addWorkingDays(lateFinish.get(id) ?? projectFinish, -spanOf(durOf(id)));
   for (const id of [...topo].reverse()) {
-    const dur = Math.max(0, Math.round(byId.get(id)!.durationDays));
-    const span = Math.max(dur - 1, 0);
-    let lf: ISODate | null = null;
+    const dur = durOf(id);
+    let lf = projectFinish;
     for (const s of succs.get(id)!) {
-      const succEarly = early.get(s.to)!;
-      const succLF = lateFinish.get(s.to) ?? projectFinish;
-      const succDur = Math.max(0, Math.round(byId.get(s.to)!.durationDays));
-      const succSpan = Math.max(succDur - 1, 0);
-      const succLS = cal.addWorkingDays(succLF, -succSpan);
-      let candidate: ISODate;
-      switch (s.dep.type) {
-        case 'FS':
-          candidate = cal.addWorkingDays(succLS, -(1 + s.dep.lagDays));
-          break;
-        case 'SS':
-          candidate = cal.addWorkingDays(cal.addWorkingDays(succLS, -s.dep.lagDays), span);
-          break;
-        case 'FF':
-          candidate = cal.addWorkingDays(succLF, -s.dep.lagDays);
-          break;
-        case 'SF':
-          candidate = cal.addWorkingDays(cal.addWorkingDays(succLF, -(s.dep.lagDays - 1)), span);
-          break;
-      }
-      void succEarly;
-      lf = lf === null ? candidate : minDate(lf, candidate);
+      const succ = { start: lateStartOf(s.to), finish: lateFinish.get(s.to) ?? projectFinish };
+      lf = minDate(lf, latestPredFinish(cal, s.dep.type, early.get(id)!, dur, succ, durOf(s.to), s.dep.lagDays));
     }
-    lateFinish.set(id, lf ?? projectFinish);
+    const c = byId.get(id)!.constraint;
+    if (c && c.date) {
+      if (c.type === 'FNLT') lf = minDate(lf, cal.prevWorkingDay(c.date));
+      else if (c.type === 'SNLT') lf = minDate(lf, cal.addWorkingDays(cal.nextWorkingDay(c.date), spanOf(dur)));
+      else if (c.type === 'MSO' || c.type === 'MFO') lf = early.get(id)!.finish;
+    }
+    lateFinish.set(id, lf);
   }
 
+  // Lo más tarde posible: se corre hasta tocar a sus sucesoras (o el fin del proyecto).
+  for (const id of [...topo].reverse()) {
+    if (byId.get(id)!.constraint?.type !== 'ALAP') continue;
+    const dur = durOf(id);
+    const e = early.get(id)!;
+    let lf = projectFinish;
+    for (const s of succs.get(id)!) {
+      const succ = early.get(s.to)!;
+      lf = minDate(lf, latestPredFinish(cal, s.dep.type, e, dur, succ, durOf(s.to), s.dep.lagDays));
+    }
+    if (lf > e.finish) early.set(id, { start: cal.addWorkingDays(lf, -spanOf(dur)), finish: lf, eod: true });
+  }
+
+  const result = new Map<string, ScheduledTask>();
   tasks.forEach((t, i) => {
     if (isSummary(t.id)) return;
     const e = early.get(t.id)!;
+    const dur = durOf(t.id);
     const lf = lateFinish.get(t.id) ?? projectFinish;
-    const slack = Math.max(0, cal.workingDaysBetween(e.finish, lf) - 1);
+    const slack = cal.workingDaysDiff(e.finish, lf);
     result.set(t.id, {
       id: t.id,
       start: e.start,
       finish: e.finish,
-      durationDays: Math.max(0, Math.round(t.durationDays)),
+      durationDays: dur,
       isSummary: false,
-      isMilestone: Math.round(t.durationDays) === 0,
+      isMilestone: dur === 0,
       percentComplete: t.percentComplete,
       slackDays: slack,
-      isCritical: slack === 0 && Math.round(t.durationDays) > 0,
+      lateStart: cal.addWorkingDays(lf, -spanOf(dur)),
+      lateFinish: lf,
+      isCritical: slack <= 0,
+      constraintConflict: conflict.has(t.id),
       row: i + 1,
       level: t.level,
       parentId: parents.get(t.id) ?? null,
@@ -222,9 +315,11 @@ export function schedule(project: Project): ScheduleResult {
     let finish = kids[0].finish;
     let weighted = 0;
     let total = 0;
+    let slack = kids[0].slackDays;
     for (const k of kids) {
       start = minDate(start, k.start);
       finish = maxDate(finish, k.finish);
+      slack = Math.min(slack, k.slackDays);
       const w = Math.max(k.durationDays, k.isMilestone ? 0 : 1);
       weighted += w * k.percentComplete;
       total += w;
@@ -237,8 +332,11 @@ export function schedule(project: Project): ScheduleResult {
       isSummary: true,
       isMilestone: false,
       percentComplete: total ? Math.round(weighted / total) : 0,
-      slackDays: 0,
+      slackDays: slack,
+      lateStart: start,
+      lateFinish: finish,
       isCritical: kids.some((k) => k.isCritical),
+      constraintConflict: kids.some((k) => k.constraintConflict),
       row: i + 1,
       level: t.level,
       parentId: parents.get(t.id) ?? null,

@@ -284,3 +284,177 @@ body,
 .statusbar .hint {
   margin-left: auto;
 }
+
+/* Indicador de restricción en la tabla */
+.task-table td.indicator {
+  text-align: center;
+  font-size: 11px;
+  padding: 0;
+}
+
+/* Panel de detalle de la tarea */
+.task-detail {
+  border-top: 2px solid var(--border-strong);
+  background: var(--bg-alt);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.task-detail.empty {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.task-detail .detail-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.task-detail .detail-fields {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.task-detail .field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.task-detail .field > span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.task-detail .field .value,
+.task-detail .field select,
+.task-detail .field input {
+  min-width: 96px;
+  height: 26px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  color: var(--text);
+}
+.task-detail .field.notes input {
+  width: 320px;
+}
+.chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.chip.info {
+  background: var(--accent-soft);
+  color: #1e3a8a;
+}
+.chip.error {
+  background: #fee2e2;
+  color: var(--critical);
+}
+.chip.warn {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+/* Diálogos */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  width: min(860px, 94vw);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-body {
+  padding: 14px 16px;
+  overflow: auto;
+}
+.calendar-editor {
+  display: flex;
+  gap: 24px;
+}
+.calendar-editor h3 {
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+.calendar-editor .grow {
+  flex: 1;
+  min-width: 0;
+}
+.calendar-editor .day-row {
+  display: grid;
+  grid-template-columns: 20px 90px 1fr;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.calendar-editor .section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.calendar-editor .holiday-add {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+}
+.calendar-editor .holiday-list {
+  max-height: 300px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.calendar-editor .holiday-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.calendar-editor .holiday-list td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.calendar-editor .right {
+  text-align: right;
+}
+.muted {
+  color: var(--text-muted);
+}
+.small {
+  font-size: 11px;
+}
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+button.link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+}

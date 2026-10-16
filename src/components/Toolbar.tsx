@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { useProject, type Zoom } from '../store/project';
+import { CalendarDialog } from './CalendarDialog';
 import { openProjectFile, saveProjectFile } from '../file/planif';
 
 export function Toolbar() {
   const s = useProject();
   const sel = s.selectedId;
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const doOpen = async () => {
     try {
@@ -76,6 +79,12 @@ export function Toolbar() {
       </div>
       <div className="sep" />
       <div className="group">
+        <button onClick={() => setShowCalendar(true)} title="Días laborables y feriados del proyecto">
+          Calendario…
+        </button>
+      </div>
+      <div className="sep" />
+      <div className="group">
         <label>
           Zoom
           <select value={s.zoom} onChange={(e) => s.setZoom(e.target.value as Zoom)}>
@@ -96,6 +105,7 @@ export function Toolbar() {
           <input type="date" value={s.project.start} onChange={(e) => e.target.value && s.setProjectStart(e.target.value)} />
         </label>
       </div>
+      {showCalendar && <CalendarDialog onClose={() => setShowCalendar(false)} />}
     </div>
   );
 }
