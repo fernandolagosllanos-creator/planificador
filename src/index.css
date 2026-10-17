@@ -524,3 +524,143 @@ button.link {
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
 }
+
+/* Vistas */
+.toolbar .views button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Hojas (recursos y carga) */
+.sheet {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px;
+  background: var(--bg-alt);
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.sheet-head .spacer {
+  flex: 1;
+}
+.sheet-sub {
+  font-size: 13px;
+  margin: 18px 0 8px;
+}
+.sheet-table {
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  width: 100%;
+}
+.sheet-table th,
+.sheet-table td {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 3px 8px;
+  height: 28px;
+  text-align: left;
+  white-space: nowrap;
+}
+.sheet-table th {
+  background: var(--bg-alt);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.sheet-table .right {
+  text-align: right;
+}
+.sheet-table .center {
+  text-align: center;
+}
+.sheet-table input,
+.sheet-table select {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  font: inherit;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.sheet-table input:focus,
+.sheet-table select:focus {
+  border-color: var(--accent);
+  background: #fff;
+  outline: none;
+}
+.sheet-table tr.over td:first-child,
+.sheet-table tr.over td:nth-child(2) input {
+  color: var(--critical);
+  font-weight: 600;
+}
+.sheet-table tr.clickable {
+  cursor: pointer;
+}
+.sheet-table tr.clickable:hover td {
+  background: var(--accent-soft);
+}
+.load-scroll {
+  overflow: auto;
+  max-height: 45vh;
+}
+.load-table th.sticky,
+.load-table td.sticky {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+}
+.load-table th.sticky {
+  background: var(--bg-alt);
+}
+.load-cell.busy {
+  background: var(--accent-soft);
+  color: #1e3a8a;
+  font-weight: 500;
+}
+.load-cell.over {
+  background: #fee2e2;
+  color: var(--critical);
+  font-weight: 600;
+}
+
+/* Asignaciones en el panel de detalle */
+.mini-table {
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.mini-table td {
+  padding: 2px 8px;
+  border-bottom: 1px solid var(--border);
+  height: 26px;
+}
+.mini-table .right {
+  text-align: right;
+}
+.mini-table input.units {
+  width: 60px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font: inherit;
+}
+.mini-table select {
+  font: inherit;
+  min-width: 180px;
+}
+.gantt-res {
+  fill: var(--text-muted);
+}
+.detail-assign .mini-table {
+  align-self: flex-start;
+}

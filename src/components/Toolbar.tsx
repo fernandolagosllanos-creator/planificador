@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useProject, type Zoom } from '../store/project';
+import { useProject, type View, type Zoom } from '../store/project';
 import { CalendarDialog } from './CalendarDialog';
 import { today } from '../engine/calendar';
 import { openProjectFile, saveProjectFile } from '../file/planif';
@@ -77,6 +77,20 @@ export function Toolbar() {
         <button onClick={() => sel && s.moveTask(sel, 1)} disabled={!sel} title="Bajar">
           ↓
         </button>
+      </div>
+      <div className="sep" />
+      <div className="group views">
+        {(
+          [
+            ['gantt', 'Gantt'],
+            ['resources', 'Recursos'],
+            ['load', 'Carga'],
+          ] as [View, string][]
+        ).map(([v, label]) => (
+          <button key={v} className={s.view === v ? 'active' : ''} onClick={() => s.setView(v)}>
+            {label}
+          </button>
+        ))}
       </div>
       <div className="sep" />
       <div className="group">

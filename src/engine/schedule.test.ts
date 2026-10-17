@@ -19,6 +19,8 @@ function project(tasks: Task[], deps: Project['dependencies'] = []): Project {
     calendars: [defaultCalendar()],
     tasks,
     dependencies: deps,
+    resources: [],
+    assignments: [],
   };
 }
 

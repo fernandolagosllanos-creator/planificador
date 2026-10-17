@@ -2,6 +2,8 @@ import type { ScheduleResult } from '../engine/schedule';
 import { computeWbs } from '../engine/schedule';
 import type { ConstraintType } from '../model/types';
 import { CONSTRAINT_LABEL_ES, CONSTRAINT_NEEDS_DATE } from '../model/types';
+import { useState } from 'react';
+import { assignmentHours, assignmentsOf, formatUnits } from '../engine/resources';
 import { useProject } from '../store/project';
 
 function fmt(iso: string): string {
@@ -15,6 +17,12 @@ export function TaskDetail({ result }: { result: ScheduleResult }) {
   const selectedId = useProject((s) => s.selectedId);
   const setConstraint = useProject((s) => s.setConstraint);
   const updateTask = useProject((s) => s.updateTask);
+  const assign = useProject((s) => s.assign);
+  const unassign = useProject((s) => s.unassign);
+  const setAssignmentUnits = useProject((s) => s.setAssignmentUnits);
+  const addResource = useProject((s) => s.addResource);
+  const [pick, setPick] = useState('');
+  const [units, setUnits] = useState('100');
 
   const task = project.tasks.find((t) => t.id === selectedId);
   const s = task ? result.tasks.get(task.id) : undefined;
@@ -79,6 +87,77 @@ export function TaskDetail({ result }: { result: ScheduleResult }) {
             <span>Notas</span>
             <input value={task.notes} onChange={(e) => updateTask(task.id, { notes: e.target.value })} placeholder="Sin notas" />
           </label>
+        </div>
+      )}
+      {!s.isSummary && (
+        <div className="detail-assign">
+          <div className="field">
+            <span>Recursos asignados</span>
+            <table className="mini-table">
+              <tbody>
+                {assignmentsOf(project, task.id).map((a) => (
+                  <tr key={a.id}>
+                    <td>{a.resource.name}</td>
+                    <td className="right">
+                      <input
+                        className="right units"
+                        key={`${a.id}-${a.units}`}
+                        defaultValue={formatUnits(a.units)}
+                        title="Unidades asignadas (100 % = tiempo completo)"
+                        onBlur={(e) => {
+                          const n = parseFloat(e.target.value.replace(',', '.'));
+                          if (n > 0 && n / 100 !== a.units) setAssignmentUnits(a.id, n / 100);
+                        }}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                      />
+                    </td>
+                    <td className="right muted">{a.resource.type === 'work' ? `${Math.round(assignmentHours(s, a.units))} h` : ''}</td>
+                    <td>
+                      <button className="link" onClick={() => unassign(a.id)}>
+                        Quitar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                <tr>
+                  <td>
+                    <select value={pick} onChange={(e) => setPick(e.target.value)}>
+                      <option value="">Elegir recurso…</option>
+                      {project.resources.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                      <option value="__new">+ Nuevo recurso…</option>
+                    </select>
+                  </td>
+                  <td className="right">
+                    <input className="right units" value={units} onChange={(e) => setUnits(e.target.value)} />
+                  </td>
+                  <td></td>
+                  <td>
+                    <button
+                      disabled={!pick}
+                      onClick={() => {
+                        const n = parseFloat(units.replace(',', '.'));
+                        if (!(n > 0)) return;
+                        let id = pick;
+                        if (pick === '__new') {
+                          const name = window.prompt('Nombre del recurso nuevo');
+                          if (!name?.trim()) return;
+                          id = addResource({ name: name.trim() });
+                        }
+                        assign(task.id, id, n / 100);
+                        setPick('');
+                      }}
+                    >
+                      Asignar
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

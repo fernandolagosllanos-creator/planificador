@@ -5,7 +5,13 @@ import type { Project, Task } from './types';
  * Se usa al abrir archivos y al recuperar el autoguardado.
  */
 export function normalizeProject(project: Project): Project {
-  return { ...project, tasks: project.tasks.map(normalizeTask) };
+  return {
+    ...project,
+    tasks: project.tasks.map(normalizeTask),
+    // Esquema 3: recursos y asignaciones.
+    resources: project.resources ?? [],
+    assignments: project.assignments ?? [],
+  };
 }
 
 function normalizeTask(task: Task): Task {

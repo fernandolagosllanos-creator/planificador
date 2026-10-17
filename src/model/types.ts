@@ -91,6 +91,36 @@ export interface Dependency {
   lagDays: number;
 }
 
+export type ResourceType = 'work' | 'material';
+
+export const RESOURCE_TYPE_LABEL_ES: Record<ResourceType, string> = {
+  work: 'Trabajo',
+  material: 'Material',
+};
+
+/** Horas de trabajo por día laboral, el valor por defecto de Project. */
+export const HOURS_PER_DAY = 8;
+
+export interface Resource {
+  id: string;
+  name: string;
+  type: ResourceType;
+  initials: string;
+  /** Capacidad máxima en unidades: 1 = 100 %, 4 = una cuadrilla de cuatro. */
+  maxUnits: number;
+  /** Tasa estándar por hora (o por unidad en materiales), en la moneda del proyecto. */
+  costPerHour: number;
+  notes: string;
+}
+
+export interface Assignment {
+  id: string;
+  taskId: string;
+  resourceId: string;
+  /** Unidades asignadas: 1 = 100 %. */
+  units: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -100,6 +130,8 @@ export interface Project {
   /** Lista plana en orden de presentación; la jerarquía la da `level`. */
   tasks: Task[];
   dependencies: Dependency[];
+  resources: Resource[];
+  assignments: Assignment[];
 }
 
 /** Resultado del cálculo de programación para una tarea. */
@@ -126,4 +158,4 @@ export interface ScheduledTask {
 }
 
 export const PLANIF_FORMAT = 'planif';
-export const PLANIF_SCHEMA_VERSION = 2;
+export const PLANIF_SCHEMA_VERSION = 3;

@@ -1,9 +1,11 @@
 import { create } from 'zustand';
-import type { Calendar, Dependency, ISODate, Project, Task, TaskConstraint } from '../model/types';
+import type { Calendar, Dependency, ISODate, Project, Resource, Task, TaskConstraint } from '../model/types';
+import { initialsOf, parseResourceNames } from '../engine/resources';
 import { defaultCalendar, today } from '../engine/calendar';
 import { linkError, parsePredecessors, subtreeIds } from '../engine/schedule';
 
 export type Zoom = 'day' | 'week' | 'month';
+export type View = 'gantt' | 'resources' | 'load';
 
 function uid(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -33,7 +35,14 @@ export function emptyProject(name = 'Proyecto sin título'): Project {
     calendars: [defaultCalendar()],
     tasks: [newTask({ name: 'Tarea 1' })],
     dependencies: [],
+    resources: [],
+    assignments: [],
   };
+}
+
+export function newResource(partial: Partial<Resource> = {}): Resource {
+  const name = partial.name ?? 'Nuevo recurso';
+  return { id: uid(), name, type: 'work', initials: initialsOf(name), maxUnits: 1, costPerHour: 0, notes: '', ...partial };
 }
 
 /** Proyecto de ejemplo para que la app no se vea vacía la primera vez. */
@@ -79,6 +88,26 @@ export function sampleProject(): Project {
     d(12, 13),
   ];
   tasks[13].constraint = { type: 'FNLT', date: '2027-02-12' };
+  const r = (name: string, maxUnits = 1, costPerHour = 20000) => newResource({ name, maxUnits, costPerHour });
+  const res = [r('Topógrafo'), r('Arquitecta', 1, 28000), r('Jefe de obra', 1, 25000), r('Cuadrilla A', 4, 60000), r('Cuadrilla B', 4, 60000), r('Electricista', 2), r('Gasfíter', 1, 18000)];
+  res.push(newResource({ name: 'Hormigón', type: 'material', initials: 'HOR', maxUnits: 1, costPerHour: 95000 }));
+  p.resources = res;
+  const a = (task: number, resource: number, units = 1) => ({ id: uid(), taskId: tasks[task].id, resourceId: res[resource].id, units });
+  p.assignments = [
+    a(1, 0),
+    a(2, 1),
+    a(3, 1),
+    a(6, 3),
+    a(7, 3),
+    a(7, 7),
+    a(8, 4),
+    a(9, 4),
+    // El jefe de obra queda sobreasignado: estructura y eléctricas se traslapan.
+    a(8, 2),
+    a(11, 2),
+    a(11, 5),
+    a(12, 6),
+  ];
   tasks[1].percentComplete = 100;
   tasks[2].percentComplete = 60;
   return p;
@@ -94,6 +123,7 @@ export interface ProjectState {
   dirty: boolean;
   selectedId: string | null;
   zoom: Zoom;
+  view: View;
   /** Petición de desplazar la Gantt hasta una fecha; `n` cambia en cada petición. */
   scrollTo: { date: ISODate; n: number } | null;
   past: HistoryEntry[];
@@ -102,6 +132,7 @@ export interface ProjectState {
 
   select: (id: string | null) => void;
   setZoom: (z: Zoom) => void;
+  setView: (v: View) => void;
   goToDate: (date: ISODate) => void;
   setError: (msg: string | null) => void;
 
@@ -119,6 +150,15 @@ export interface ProjectState {
   /** Crea un vínculo fin-comienzo; devuelve false (y deja un error) si no es válido. */
   addDependency: (from: string, to: string, type?: Dependency['type']) => boolean;
   removeDependency: (id: string) => void;
+
+  addResource: (partial?: Partial<Resource>) => string;
+  updateResource: (id: string, patch: Partial<Resource>) => void;
+  deleteResource: (id: string) => void;
+  assign: (taskId: string, resourceId: string, units: number) => void;
+  setAssignmentUnits: (id: string, units: number) => void;
+  unassign: (id: string) => void;
+  /** Interpreta la columna "Recursos"; crea los recursos que no existan, como hace Project. */
+  setResourceNames: (taskId: string, text: string) => void;
   addTaskAfter: (id: string | null) => string;
   deleteTask: (id: string) => void;
   indent: (id: string) => void;
@@ -140,6 +180,7 @@ export const useProject = create<ProjectState>((set, get) => ({
   dirty: false,
   selectedId: null,
   zoom: 'week',
+  view: 'gantt',
   scrollTo: null,
   past: [],
   future: [],
@@ -147,6 +188,7 @@ export const useProject = create<ProjectState>((set, get) => ({
 
   select: (id) => set({ selectedId: id }),
   setZoom: (zoom) => set({ zoom }),
+  setView: (view) => set({ view }),
   goToDate: (date) => set({ scrollTo: { date, n: (get().scrollTo?.n ?? 0) + 1 } }),
   setError: (error) => set({ error }),
 
@@ -236,6 +278,62 @@ export const useProject = create<ProjectState>((set, get) => ({
   },
 
   removeDependency: (id) => get().mutate((p) => void (p.dependencies = p.dependencies.filter((d) => d.id !== id))),
+
+  addResource: (partial = {}) => {
+    const r = newResource(partial);
+    get().mutate((p) => void p.resources.push(r));
+    return r.id;
+  },
+
+  updateResource: (id, patch) =>
+    get().mutate((p) => {
+      const r = p.resources.find((x) => x.id === id);
+      if (!r) return;
+      Object.assign(r, patch);
+      if (patch.name !== undefined && !patch.initials && r.initials === initialsOf(r.name)) r.initials = initialsOf(patch.name);
+    }),
+
+  deleteResource: (id) =>
+    get().mutate((p) => {
+      p.resources = p.resources.filter((r) => r.id !== id);
+      p.assignments = p.assignments.filter((a) => a.resourceId !== id);
+    }),
+
+  assign: (taskId, resourceId, units) =>
+    get().mutate((p) => {
+      const existing = p.assignments.find((a) => a.taskId === taskId && a.resourceId === resourceId);
+      if (existing) existing.units = units;
+      else p.assignments.push({ id: uid(), taskId, resourceId, units });
+    }),
+
+  setAssignmentUnits: (id, units) =>
+    get().mutate((p) => {
+      const a = p.assignments.find((x) => x.id === id);
+      if (a) a.units = units;
+    }),
+
+  unassign: (id) => get().mutate((p) => void (p.assignments = p.assignments.filter((a) => a.id !== id))),
+
+  setResourceNames: (taskId, text) => {
+    let parsed;
+    try {
+      parsed = parseResourceNames(text);
+    } catch (e) {
+      set({ error: (e as Error).message });
+      return;
+    }
+    get().mutate((p) => {
+      p.assignments = p.assignments.filter((a) => a.taskId !== taskId);
+      for (const pr of parsed) {
+        let r = p.resources.find((x) => x.name.localeCompare(pr.name, 'es', { sensitivity: 'base' }) === 0);
+        if (!r) {
+          r = newResource({ name: pr.name });
+          p.resources.push(r);
+        }
+        p.assignments.push({ id: uid(), taskId, resourceId: r.id, units: pr.units });
+      }
+    });
+  },
 
   addTaskAfter: (id) => {
     const t = newTask();

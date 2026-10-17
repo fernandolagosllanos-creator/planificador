@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ScheduleResult } from '../engine/schedule';
 import type { Task } from '../model/types';
+import { formatResourceNames } from '../engine/resources';
 import { computeWbs, formatPredecessors } from '../engine/schedule';
 import { CONSTRAINT_LABEL_ES } from '../model/types';
 import { useProject } from '../store/project';
@@ -20,6 +21,7 @@ export const TABLE_COLUMNS = [
   { key: 'finish', label: 'Fin', width: 104 },
   { key: 'preds', label: 'Predecesoras', width: 120 },
   { key: 'pct', label: '% comp.', width: 70 },
+  { key: 'resources', label: 'Recursos', width: 160 },
 ] as const;
 
 export const TABLE_WIDTH = TABLE_COLUMNS.reduce((s, c) => s + c.width, 0);
@@ -45,6 +47,7 @@ export function TaskTable({ result }: Props) {
   const updateTask = useProject((s) => s.updateTask);
   const setPredecessors = useProject((s) => s.setPredecessors);
   const setConstraint = useProject((s) => s.setConstraint);
+  const setResourceNames = useProject((s) => s.setResourceNames);
   const setError = useProject((s) => s.setError);
   const wbs = computeWbs(project.tasks);
 
@@ -150,6 +153,7 @@ export function TaskTable({ result }: Props) {
                 },
                 { editable: !s.isSummary, align: 'right' },
               )}
+              {cell('resources', formatResourceNames(project, t.id), (v) => setResourceNames(t.id, v), { editable: !s.isSummary })}
             </tr>
           );
         })}

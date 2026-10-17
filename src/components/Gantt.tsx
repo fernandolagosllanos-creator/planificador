@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ScheduleResult } from '../engine/schedule';
 import { addDays, diffDays, parseDate, today } from '../engine/calendar';
 import { WorkCalendar } from '../engine/calendar';
+import { formatResourceNames } from '../engine/resources';
 import { useProject, type Zoom } from '../store/project';
 import { HEADER_HEIGHT, ROW_HEIGHT } from './layout';
 
@@ -117,6 +118,7 @@ export function Gantt({ result }: Props) {
   const rowY = (row: number) => HEADER_HEIGHT + (row - 1) * ROW_HEIGHT;
   const byId = result.tasks;
   const nameOf = (id: string) => project.tasks.find((p) => p.id === id)?.name ?? '';
+  const resourcesOf = (id: string) => formatResourceNames(project, id).replace(/;/g, ', ');
 
   // ---------------------------------------------------------------------------
   // Arrastre
@@ -373,6 +375,7 @@ export function Gantt({ result }: Props) {
             <rect x={x1 - 5} y={top} width={6} height={BAR_H} className="resize" onPointerDown={(e) => startDrag(e, t.id, 'resize')} />
             <text x={x1 + 6} y={cy + 4} className="gantt-label">
               {label}
+              {resourcesOf(t.id) && <tspan className="gantt-res"> · {resourcesOf(t.id)}</tspan>}
             </text>
             {handles}
           </g>

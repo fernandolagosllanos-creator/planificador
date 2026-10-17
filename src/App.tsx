@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Gantt } from './components/Gantt';
+import { ResourceLoad } from './components/ResourceLoad';
+import { ResourceSheet } from './components/ResourceSheet';
 import { TaskDetail } from './components/TaskDetail';
 import { TaskTable } from './components/TaskTable';
 import { Toolbar } from './components/Toolbar';
@@ -83,15 +85,21 @@ export default function App() {
       {result.cycle.length > 0 && (
         <div className="error-bar">⚠ Hay un ciclo de dependencias en las filas {result.cycle.map((id) => result.tasks.get(id)!.row).join(', ')}.</div>
       )}
-      <div className="split">
-        <div className="pane left" ref={leftRef} onScroll={() => sync(leftRef.current, rightRef.current)}>
-          <TaskTable result={result} />
-        </div>
-        <div className="pane right" ref={rightRef} onScroll={() => sync(rightRef.current, leftRef.current)}>
-          <Gantt result={result} />
-        </div>
-      </div>
-      <TaskDetail result={result} />
+      {s.view === 'gantt' && (
+        <>
+          <div className="split">
+            <div className="pane left" ref={leftRef} onScroll={() => sync(leftRef.current, rightRef.current)}>
+              <TaskTable result={result} />
+            </div>
+            <div className="pane right" ref={rightRef} onScroll={() => sync(rightRef.current, leftRef.current)}>
+              <Gantt result={result} />
+            </div>
+          </div>
+          <TaskDetail result={result} />
+        </>
+      )}
+      {s.view === 'resources' && <ResourceSheet result={result} />}
+      {s.view === 'load' && <ResourceLoad result={result} />}
       <div className="statusbar">
         <span>{s.project.tasks.length} tareas</span>
         <span>Inicio: {fmt(result.projectStart)}</span>
