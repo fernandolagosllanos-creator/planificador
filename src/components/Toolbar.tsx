@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { useProject, type View, type Zoom } from '../store/project';
 import { CalendarDialog } from './CalendarDialog';
 import { today } from '../engine/calendar';
-import { openProjectFile, saveProjectFile } from '../file/planif';
+import { openBytes, openProjectFile, openWithSystem, safeFileName, saveBytes, saveProjectFile, isTauri } from '../file/planif';
+import { exportMspdi, importMspdi } from '../file/mspdi';
+import { taskRows, toCsv, toXlsx } from '../file/tabular';
+import { buildPrintReport } from '../file/report';
+import { schedule } from '../engine/schedule';
+import { WorkCalendar } from '../engine/calendar';
+import { strToU8 } from 'fflate';
 
 export function Toolbar() {
   const s = useProject();
@@ -27,6 +33,52 @@ export function Toolbar() {
     }
   };
 
+  const confirmDiscard = () => !s.dirty || window.confirm('Hay cambios sin guardar. ¿Continuar de todas formas?');
+
+  const doImportXml = async () => {
+    try {
+      const r = await openBytes('XML de Microsoft Project', ['xml']);
+      if (!r) return;
+      const project = importMspdi(new TextDecoder().decode(r.bytes));
+      if (!confirmDiscard()) return;
+      s.loadProject(project, null);
+    } catch (e) {
+      s.setError(`No se pudo importar el XML: ${(e as Error).message}`);
+    }
+  };
+
+  const base = () => safeFileName(s.project.name);
+  const rows = () => {
+    const cal = new WorkCalendar(s.project.calendars.find((c) => c.id === s.project.calendarId) ?? s.project.calendars[0]);
+    return taskRows(s.project, schedule(s.project), cal);
+  };
+  const doExport = async (kind: 'xml' | 'xlsx' | 'csv' | 'report') => {
+    try {
+      if (kind === 'xml') await saveBytes(strToU8(exportMspdi(s.project)), `${base()}.xml`, 'XML de Microsoft Project', 'xml', 'application/xml');
+      else if (kind === 'xlsx') await saveBytes(toXlsx(rows()), `${base()}.xlsx`, 'Libro de Excel', 'xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      else if (kind === 'csv') await saveBytes(strToU8(toCsv(rows())), `${base()}.csv`, 'CSV (separado por punto y coma)', 'csv', 'text/csv');
+      else {
+        if (s.view !== 'gantt') {
+          s.setError('Cambia a la vista Gantt para generar el informe');
+          return;
+        }
+        const html = buildPrintReport(s.project, schedule(s.project));
+        if (isTauri()) {
+          const path = await saveBytes(strToU8(html), `${base()} - informe.html`, 'Informe (página web)', 'html', 'text/html');
+          if (path) await openWithSystem(path);
+        } else {
+          const w = window.open('', '_blank');
+          if (w) {
+            w.document.write(html);
+            w.document.close();
+          }
+        }
+      }
+    } catch (e) {
+      s.setError(`No se pudo exportar: ${(e as Error).message}`);
+    }
+  };
+
   const doNew = () => {
     if (s.dirty && !window.confirm('Hay cambios sin guardar. ¿Crear un proyecto nuevo de todas formas?')) return;
     s.newProject();
@@ -47,6 +99,15 @@ export function Toolbar() {
         <button onClick={() => doSave(true)} title="Guardar como…">
           Guardar como…
         </button>
+        <Menu label="Importar">
+          <button onClick={doImportXml}>XML de Microsoft Project…</button>
+        </Menu>
+        <Menu label="Exportar">
+          <button onClick={() => doExport('xml')}>XML de Microsoft Project…</button>
+          <button onClick={() => doExport('xlsx')}>Tabla de tareas a Excel (.xlsx)…</button>
+          <button onClick={() => doExport('csv')}>Tabla de tareas a CSV…</button>
+          <button onClick={() => doExport('report')}>Informe para imprimir o PDF…</button>
+        </Menu>
       </div>
       <div className="sep" />
       <div className="group">
@@ -145,6 +206,23 @@ export function Toolbar() {
         </label>
       </div>
       {showCalendar && <CalendarDialog onClose={() => setShowCalendar(false)} />}
+    </div>
+  );
+}
+
+/** Menú desplegable sencillo: un botón que muestra una lista de acciones. */
+function Menu({ label, children }: { label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="menu" onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setOpen(false)}>
+      <button onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}>
+        {label} ▾
+      </button>
+      {open && (
+        <div className="menu-list" role="menu" onClick={() => setOpen(false)}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }

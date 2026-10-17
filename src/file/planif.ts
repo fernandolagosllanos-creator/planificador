@@ -145,3 +145,71 @@ export function loadAutosave(): Project | null {
     return null;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Ayudantes genéricos para importar y exportar otros formatos.
+// ---------------------------------------------------------------------------
+
+export interface OpenedBytes {
+  bytes: Uint8Array;
+  path: string | null;
+  name: string;
+}
+
+/** Abre un archivo cualquiera elegido por el usuario. */
+export async function openBytes(filterName: string, extensions: string[]): Promise<OpenedBytes | null> {
+  if (isTauri()) {
+    const { open } = await import('@tauri-apps/plugin-dialog');
+    const { readFile } = await import('@tauri-apps/plugin-fs');
+    const path = await open({ multiple: false, directory: false, filters: [{ name: filterName, extensions }] });
+    if (!path) return null;
+    const p = path as string;
+    return { bytes: await readFile(p), path: p, name: p.split(/[\\/]/).pop() ?? p };
+  }
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = extensions.map((e) => `.${e}`).join(',');
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return resolve(null);
+      try {
+        resolve({ bytes: new Uint8Array(await file.arrayBuffer()), path: null, name: file.name });
+      } catch (e) {
+        reject(e);
+      }
+    };
+    input.click();
+  });
+}
+
+/** Guarda bytes en un archivo elegido por el usuario. Devuelve la ruta, o null si canceló. */
+export async function saveBytes(bytes: Uint8Array, suggestedName: string, filterName: string, extension: string, mime: string): Promise<string | null> {
+  if (isTauri()) {
+    const { save } = await import('@tauri-apps/plugin-dialog');
+    const { writeFile } = await import('@tauri-apps/plugin-fs');
+    let path = await save({ defaultPath: suggestedName, filters: [{ name: filterName, extensions: [extension] }] });
+    if (!path) return null;
+    if (!path.toLowerCase().endsWith(`.${extension}`)) path += `.${extension}`;
+    await writeFile(path, bytes);
+    return path;
+  }
+  const blob = new Blob([bytes as BlobPart], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = suggestedName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return suggestedName;
+}
+
+/** Abre un archivo con la aplicación predeterminada del sistema (solo en escritorio). */
+export async function openWithSystem(path: string): Promise<void> {
+  const { invoke } = await import('@tauri-apps/api/core');
+  await invoke('open_path', { path });
+}
+
+export function safeFileName(name: string): string {
+  return sanitize(name) || 'proyecto';
+}
