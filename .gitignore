@@ -24,6 +24,6 @@ dist-ssr
 *.sw?
 
 # Tauri
-src-tauri/target
-src-tauri/gen/schemas
+**/src-tauri/target
+**/src-tauri/gen/schemas
 instaladores/

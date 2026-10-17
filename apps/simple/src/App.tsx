@@ -1,17 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Gantt } from './components/Gantt';
-import { ResourceLoad } from './components/ResourceLoad';
-import { ResourceSheet } from './components/ResourceSheet';
-import { TaskDetail } from './components/TaskDetail';
-import { TaskTable } from './components/TaskTable';
+import {
+  Gantt,
+  ResourceLoad,
+  ResourceSheet,
+  TaskDetail,
+  TaskTable,
+  WorkCalendar,
+  appVersion,
+  autosave,
+  isTauri,
+  loadAutosave,
+  projectProgress,
+  promptForUpdate,
+  saveProjectFile,
+  schedule,
+  useProject,
+} from '@planificador/core';
 import { Toolbar } from './components/Toolbar';
-import { schedule } from './engine/schedule';
-import { autosave, isTauri, loadAutosave, saveProjectFile } from './file/planif';
-import { useProject } from './store/project';
-import { promptForUpdate } from './updater';
-import { APP_VERSION } from './file/planif';
-import { WorkCalendar } from './engine/calendar';
-import { projectProgress } from './engine/tracking';
 
 export default function App() {
   const s = useProject();
@@ -124,7 +129,7 @@ export default function App() {
         <span>{s.project.baseline ? `Línea base: ${fmt(s.project.baseline.savedAt.slice(0, 10))}` : 'Sin línea base'}</span>
         <span>{s.filePath ? s.filePath : 'Sin guardar en archivo'}</span>
         <span>
-          v{APP_VERSION}
+          v{appVersion()}
           {isTauri() && (
             <>
               {' · '}

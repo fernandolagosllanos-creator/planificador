@@ -1,0 +1,29 @@
+{
+  "name": "@planificador/core",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Núcleo compartido del Planificador: modelo, motor de programación, archivos .planif, Gantt y tabla.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/index.css"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-dialog": "^2.8.3",
+    "@tauri-apps/plugin-fs": "^2.7.1",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.14.0",
+    "fast-xml-parser": "^5.11.2",
+    "fflate": "^0.8.3",
+    "zustand": "^5.0.15"
+  },
+  "peerDependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

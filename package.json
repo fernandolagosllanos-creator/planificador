@@ -1,37 +1,25 @@
 {
-  "name": "planificador",
+  "name": "planificador-monorepo",
   "private": true,
-  "version": "0.2.0",
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm run dev -w apps/simple",
+    "build": "npm run build -w apps/simple",
+    "test": "npm test -w packages/core",
     "lint": "oxlint",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "tauri": "tauri"
-  },
-  "dependencies": {
-    "@tauri-apps/api": "^2.12.4",
-    "@tauri-apps/plugin-dialog": "^2.8.3",
-    "@tauri-apps/plugin-fs": "^2.7.1",
-    "@tauri-apps/plugin-process": "^2.4.0",
-    "@tauri-apps/plugin-updater": "^2.14.0",
-    "fast-xml-parser": "^5.11.2",
-    "fflate": "^0.8.3",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "zustand": "^5.0.15"
+    "typecheck": "npm run typecheck -w packages/core && npm run typecheck -w apps/simple",
+    "tauri": "npm run tauri -w apps/simple --"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.12.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
-    "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
-    "vite": "^8.3.0",
     "vitest": "^5.0.5"
   }
 }

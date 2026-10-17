@@ -1,13 +1,26 @@
 import { useState } from 'react';
-import { useProject, type View, type Zoom } from '../store/project';
-import { CalendarDialog } from './CalendarDialog';
-import { today } from '../engine/calendar';
-import { openBytes, openProjectFile, openWithSystem, safeFileName, saveBytes, saveProjectFile, isTauri } from '../file/planif';
-import { exportMspdi, importMspdi } from '../file/mspdi';
-import { taskRows, toCsv, toXlsx } from '../file/tabular';
-import { buildPrintReport } from '../file/report';
-import { schedule } from '../engine/schedule';
-import { WorkCalendar } from '../engine/calendar';
+import {
+  CalendarDialog,
+  WorkCalendar,
+  buildPrintReport,
+  exportMspdi,
+  importMspdi,
+  isTauri,
+  openBytes,
+  openProjectFile,
+  openWithSystem,
+  safeFileName,
+  saveBytes,
+  saveProjectFile,
+  schedule,
+  taskRows,
+  toCsv,
+  toXlsx,
+  today,
+  useProject,
+  type View,
+  type Zoom,
+} from '@planificador/core';
 import { strToU8 } from 'fflate';
 
 export function Toolbar() {
