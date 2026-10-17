@@ -75,6 +75,9 @@ export interface Task {
   durationDays: number;
   constraint: TaskConstraint;
   percentComplete: number;
+  /** Comienzo y fin reales. Se fijan al registrar avance y pueden editarse; fijan la tarea en esas fechas. */
+  actualStart: ISODate | null;
+  actualFinish: ISODate | null;
   notes: string;
   /** Solo en archivos de esquema 1: inicio fijado a mano. Se migra a una restricción SNET. */
   manualStart?: ISODate | null;
@@ -121,10 +124,25 @@ export interface Assignment {
   units: number;
 }
 
+export interface BaselineEntry {
+  start: ISODate;
+  finish: ISODate;
+  durationDays: number;
+}
+
+/** Línea base: copia de las fechas programadas en un momento dado, para medir desviaciones. */
+export interface Baseline {
+  savedAt: string;
+  tasks: Record<string, BaselineEntry>;
+}
+
 export interface Project {
   id: string;
   name: string;
   start: ISODate;
+  /** Fecha hasta la que se ha registrado el avance; null = hoy. */
+  statusDate: ISODate | null;
+  baseline: Baseline | null;
   calendarId: string;
   calendars: Calendar[];
   /** Lista plana en orden de presentación; la jerarquía la da `level`. */
@@ -158,4 +176,4 @@ export interface ScheduledTask {
 }
 
 export const PLANIF_FORMAT = 'planif';
-export const PLANIF_SCHEMA_VERSION = 3;
+export const PLANIF_SCHEMA_VERSION = 4;

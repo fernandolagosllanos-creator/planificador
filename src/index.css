@@ -664,3 +664,41 @@ button.link {
 .detail-assign .mini-table {
   align-self: flex-start;
 }
+
+/* Línea base y seguimiento */
+.gantt-baseline {
+  fill: #94a3b8;
+  pointer-events: none;
+}
+.gantt-status line {
+  stroke: #16a34a;
+  stroke-width: 2;
+}
+.gantt-status text {
+  fill: #16a34a;
+  font-size: 10px;
+  font-weight: 700;
+}
+.gantt-progress {
+  fill: none;
+  stroke: var(--critical);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.task-table td.late {
+  color: var(--critical);
+  font-weight: 600;
+}
+.task-table td.muted {
+  color: var(--text-muted);
+}
+.small-btn {
+  align-self: flex-end;
+  height: 26px;
+}
+.toolbar input[type='date'] {
+  font: inherit;
+  padding: 2px 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}

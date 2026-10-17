@@ -79,6 +79,24 @@ export function Toolbar() {
         </button>
       </div>
       <div className="sep" />
+      <div className="group">
+        <button
+          onClick={() => {
+            if (!s.project.baseline || window.confirm('Ya hay una línea base guardada. ¿Reemplazarla con las fechas actuales?')) s.saveBaseline();
+          }}
+          title="Guarda las fechas actuales como línea base para medir desviaciones"
+        >
+          {s.project.baseline ? 'Línea base ✓' : 'Guardar línea base'}
+        </button>
+        <button onClick={s.clearBaseline} disabled={!s.project.baseline} title="Borrar la línea base guardada">
+          Borrar LB
+        </button>
+        <label title="Fecha hasta la que está registrado el avance; dibuja la línea de progreso">
+          Fecha de estado
+          <input type="date" value={s.project.statusDate ?? ''} onChange={(e) => s.setStatusDate(e.target.value || null)} />
+        </label>
+      </div>
+      <div className="sep" />
       <div className="group views">
         {(
           [

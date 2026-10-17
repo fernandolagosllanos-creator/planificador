@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import type { Calendar, Dependency, ISODate, Project, Resource, Task, TaskConstraint } from '../model/types';
 import { initialsOf, parseResourceNames } from '../engine/resources';
 import { defaultCalendar, today } from '../engine/calendar';
-import { linkError, parsePredecessors, subtreeIds } from '../engine/schedule';
+import { linkError, parsePredecessors, schedule, subtreeIds } from '../engine/schedule';
+import { takeBaseline } from '../engine/tracking';
 
 export type Zoom = 'day' | 'week' | 'month';
 export type View = 'gantt' | 'resources' | 'load';
@@ -21,6 +22,8 @@ export function newTask(partial: Partial<Task> = {}): Task {
     durationDays: 1,
     constraint: { type: 'ASAP', date: null },
     percentComplete: 0,
+    actualStart: null,
+    actualFinish: null,
     notes: '',
     ...partial,
   };
@@ -31,6 +34,8 @@ export function emptyProject(name = 'Proyecto sin título'): Project {
     id: uid(),
     name,
     start: today(),
+    statusDate: null,
+    baseline: null,
     calendarId: 'cal-std',
     calendars: [defaultCalendar()],
     tasks: [newTask({ name: 'Tarea 1' })],
@@ -108,8 +113,16 @@ export function sampleProject(): Project {
     a(11, 5),
     a(12, 6),
   ];
+  // Línea base guardada con el plan original; luego el permiso se alargó y hay avance registrado.
+  p.baseline = takeBaseline(schedule(p));
+  p.baseline.savedAt = '2026-10-30T12:00:00.000Z';
+  tasks[3].durationDays = 18;
+  p.statusDate = '2026-11-27';
   tasks[1].percentComplete = 100;
+  tasks[1].actualStart = '2026-11-02';
+  tasks[1].actualFinish = '2026-11-04';
   tasks[2].percentComplete = 60;
+  tasks[2].actualStart = '2026-11-05';
   return p;
 }
 
@@ -143,6 +156,11 @@ export interface ProjectState {
 
   setProjectName: (name: string) => void;
   setProjectStart: (start: ISODate) => void;
+  setStatusDate: (date: ISODate | null) => void;
+  saveBaseline: () => void;
+  clearBaseline: () => void;
+  /** Registra el avance y fija las fechas reales como lo hace Project. */
+  setPercentComplete: (id: string, pct: number) => void;
   updateTask: (id: string, patch: Partial<Task>) => void;
   setConstraint: (id: string, constraint: TaskConstraint) => void;
   updateCalendar: (calendar: Calendar) => void;
@@ -221,6 +239,24 @@ export const useProject = create<ProjectState>((set, get) => ({
 
   setProjectName: (name) => get().mutate((p) => void (p.name = name)),
   setProjectStart: (start) => get().mutate((p) => void (p.start = start)),
+  setStatusDate: (date) => get().mutate((p) => void (p.statusDate = date)),
+  saveBaseline: () => get().mutate((p) => void (p.baseline = takeBaseline(schedule(p)))),
+  clearBaseline: () => get().mutate((p) => void (p.baseline = null)),
+
+  setPercentComplete: (id, pct) =>
+    get().mutate((p) => {
+      const t = p.tasks.find((x) => x.id === id);
+      if (!t) return;
+      const sched = schedule(p).tasks.get(id);
+      t.percentComplete = pct;
+      if (pct === 0) {
+        t.actualStart = null;
+        t.actualFinish = null;
+      } else {
+        t.actualStart = t.actualStart ?? sched?.start ?? null;
+        t.actualFinish = pct === 100 ? (t.actualFinish ?? sched?.finish ?? null) : null;
+      }
+    }),
 
   updateTask: (id, patch) =>
     get().mutate((p) => {

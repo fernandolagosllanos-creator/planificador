@@ -5,7 +5,7 @@ import { assignmentHours, computeResourceLoad, formatResourceNames, parseResourc
 import { schedule } from './schedule';
 
 function task(id: string, name: string, durationDays: number): Task {
-  return { id, name, level: 0, durationDays, constraint: { type: 'ASAP', date: null }, percentComplete: 0, notes: '' };
+  return { id, name, level: 0, durationDays, constraint: { type: 'ASAP', date: null }, percentComplete: 0, actualStart: null, actualFinish: null, notes: '' };
 }
 
 function resource(id: string, name: string, maxUnits = 1): Resource {
@@ -17,6 +17,8 @@ function project(tasks: Task[], resources: Resource[], assignments: Project['ass
     id: 'p',
     name: 'Prueba',
     start: '2026-11-02', // lunes
+    statusDate: null,
+    baseline: null,
     calendarId: 'cal-std',
     calendars: [defaultCalendar()],
     tasks,

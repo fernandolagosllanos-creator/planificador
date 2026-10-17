@@ -3,6 +3,7 @@ import type { ScheduleResult } from '../engine/schedule';
 import { addDays, diffDays, parseDate, today } from '../engine/calendar';
 import { WorkCalendar } from '../engine/calendar';
 import { formatResourceNames } from '../engine/resources';
+import { progressPoints, varianceOf } from '../engine/tracking';
 import { useProject, type Zoom } from '../store/project';
 import { HEADER_HEIGHT, ROW_HEIGHT } from './layout';
 
@@ -244,6 +245,14 @@ export function Gantt({ result }: Props) {
     rows: string;
   }[];
 
+  // Línea de progreso: pasa por el punto hasta donde avanzó cada tarea a la fecha de estado.
+  const statusDate = project.statusDate;
+  const progress = statusDate ? progressPoints(result, statusDate, cal) : [];
+  const sx = statusDate ? x(statusDate) + pxPerDay : 0;
+  const progressPath = statusDate
+    ? `M${sx},${HEADER_HEIGHT} ` + progress.map((p) => `L${x(p.date) + (p.date < statusDate ? pxPerDay : pxPerDay)},${rowY(p.row) + ROW_HEIGHT / 2}`).join(' ') + ` L${sx},${height}`
+    : '';
+
   const dragging = drag && drag.kind !== 'link' ? byId.get(drag.id) : undefined;
   const ghost = dragging && drag && drag.kind !== 'link' ? preview(dragging, drag) : null;
 
@@ -320,6 +329,30 @@ export function Gantt({ result }: Props) {
         </g>
       ))}
 
+      {/* Línea base: barra gris bajo cada tarea */}
+      {project.baseline &&
+        result.order.map((t) => {
+          const v = varianceOf(t, project.baseline, cal);
+          if (!v) return null;
+          const y = rowY(t.row);
+          if (t.isMilestone) {
+            const cx = x(v.baselineStart) + pxPerDay / 2;
+            const cy = y + ROW_HEIGHT - 6;
+            return <polygon key={t.id} className="gantt-baseline" points={`${cx},${cy - 4} ${cx + 4},${cy} ${cx},${cy + 4} ${cx - 4},${cy}`} />;
+          }
+          return (
+            <rect
+              key={t.id}
+              className="gantt-baseline"
+              x={x(v.baselineStart)}
+              y={y + ROW_HEIGHT - 7}
+              width={Math.max(xEnd(v.baselineFinish) - x(v.baselineStart), 2)}
+              height={4}
+              rx={1}
+            />
+          );
+        })}
+
       {/* Barras */}
       {result.order.map((t) => {
         const y = rowY(t.row);
@@ -328,9 +361,10 @@ export function Gantt({ result }: Props) {
         const w = Math.max(x1 - x0, 2);
         const label = nameOf(t.id);
         const cy = y + ROW_HEIGHT / 2;
+        const v = varianceOf(t, project.baseline, cal);
         const tip = `${t.row} · ${label}\n${t.isMilestone ? `Hito: ${fmt(t.start)}` : `${fmt(t.start)} → ${fmt(t.finish)} · ${t.durationDays} d`}${
           t.isSummary ? '' : `\nHolgura: ${t.slackDays} d${t.isCritical ? ' · ruta crítica' : ''}`
-        }`;
+        }${v ? `\nLínea base: ${fmt(v.baselineStart)} → ${fmt(v.baselineFinish)} · variación fin ${v.finishVariance > 0 ? '+' : ''}${v.finishVariance} d` : ''}`;
         const handles = !t.isSummary && (
           <>
             <circle cx={x0 - 5} cy={cy} r={4} className="handle" onPointerDown={(e) => startLink(e, t.id, x0 - 5, cy)} />
@@ -402,6 +436,17 @@ export function Gantt({ result }: Props) {
           <line x1={drag.fromX} y1={drag.fromY} x2={drag.px} y2={drag.py} />
           <text x={drag.px + 8} y={drag.py - 6}>
             {drag.overId ? `Vincular con ${byId.get(drag.overId)?.row}` : 'Suelta sobre otra tarea'}
+          </text>
+        </g>
+      )}
+
+      {/* Fecha de estado y línea de progreso */}
+      {statusDate && statusDate >= rangeStart && statusDate <= rangeEnd && (
+        <g className="gantt-status" pointerEvents="none">
+          <path d={progressPath} className="gantt-progress" />
+          <line x1={sx} y1={HEADER_HEIGHT} x2={sx} y2={height} />
+          <text x={sx + 3} y={height - 6}>
+            estado {fmtShort(statusDate)}
           </text>
         </g>
       )}

@@ -5,6 +5,8 @@ import { CONSTRAINT_LABEL_ES, CONSTRAINT_NEEDS_DATE } from '../model/types';
 import { useState } from 'react';
 import { assignmentHours, assignmentsOf, formatUnits } from '../engine/resources';
 import { useProject } from '../store/project';
+import { WorkCalendar } from '../engine/calendar';
+import { plannedPercent, varianceOf } from '../engine/tracking';
 
 function fmt(iso: string): string {
   const [y, m, d] = iso.split('-');
@@ -23,6 +25,8 @@ export function TaskDetail({ result }: { result: ScheduleResult }) {
   const addResource = useProject((s) => s.addResource);
   const [pick, setPick] = useState('');
   const [units, setUnits] = useState('100');
+  const setPercentComplete = useProject((s) => s.setPercentComplete);
+  const cal = new WorkCalendar(project.calendars.find((c) => c.id === project.calendarId) ?? project.calendars[0]);
 
   const task = project.tasks.find((t) => t.id === selectedId);
   const s = task ? result.tasks.get(task.id) : undefined;
@@ -31,6 +35,9 @@ export function TaskDetail({ result }: { result: ScheduleResult }) {
   }
 
   const c = task.constraint ?? { type: 'ASAP' as ConstraintType, date: null };
+  const variance = varianceOf(s, project.baseline, cal);
+  const statusDate = project.statusDate;
+  const planned = statusDate && !s.isSummary ? plannedPercent(s, statusDate, cal) : null;
   const changeType = (type: ConstraintType) => {
     if (!CONSTRAINT_NEEDS_DATE[type]) setConstraint(task.id, { type, date: null });
     else {
@@ -53,6 +60,13 @@ export function TaskDetail({ result }: { result: ScheduleResult }) {
         {s.constraintConflict && (
           <span className="chip warn">La restricción choca con las predecesoras; se respeta la restricción</span>
         )}
+        {variance && variance.finishVariance > 0 && <span className="chip warn">Termina {variance.finishVariance} d después de la línea base</span>}
+        {variance && variance.finishVariance < 0 && <span className="chip info">Termina {-variance.finishVariance} d antes de la línea base</span>}
+        {planned !== null && planned > s.percentComplete && (
+          <span className="chip error">
+            Atrasada: {s.percentComplete}% hecho, {planned}% planificado a la fecha de estado
+          </span>
+        )}
       </div>
       <div className="detail-fields">
         <Field label="Duración" value={s.isMilestone ? '0 d (hito)' : `${s.durationDays} d`} />
@@ -61,7 +75,43 @@ export function TaskDetail({ result }: { result: ScheduleResult }) {
         {!s.isSummary && <Field label="Comienzo tardío" value={fmt(s.lateStart)} />}
         {!s.isSummary && <Field label="Fin tardío" value={fmt(s.lateFinish)} />}
         <Field label="% Avance" value={`${s.percentComplete}%`} />
+        {variance && <Field label="Comienzo LB" value={fmt(variance.baselineStart)} />}
+        {variance && <Field label="Fin LB" value={fmt(variance.baselineFinish)} />}
+        {variance && <Field label="Var. fin" value={`${variance.finishVariance > 0 ? '+' : ''}${variance.finishVariance} d`} />}
       </div>
+      {!s.isSummary && (
+        <div className="detail-fields">
+          <label className="field">
+            <span>% completado</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={s.percentComplete}
+              onChange={(e) => {
+                const n = Math.max(0, Math.min(100, parseInt(e.target.value || '0', 10)));
+                if (!Number.isNaN(n)) setPercentComplete(task.id, n);
+              }}
+            />
+          </label>
+          <label className="field">
+            <span>Comienzo real</span>
+            <input type="date" value={task.actualStart ?? ''} onChange={(e) => updateTask(task.id, { actualStart: e.target.value || null })} />
+          </label>
+          <label className="field">
+            <span>Fin real</span>
+            <input type="date" value={task.actualFinish ?? ''} onChange={(e) => updateTask(task.id, { actualFinish: e.target.value || null })} />
+          </label>
+          <button
+            className="small-btn"
+            onClick={() => setPercentComplete(task.id, 100)}
+            disabled={s.percentComplete === 100}
+            title="Marca la tarea como terminada en sus fechas programadas"
+          >
+            Marcar 100 %
+          </button>
+        </div>
+      )}
       {!s.isSummary && (
         <div className="detail-fields">
           <label className="field">

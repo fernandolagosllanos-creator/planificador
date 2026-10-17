@@ -8,10 +8,16 @@ import { Toolbar } from './components/Toolbar';
 import { schedule } from './engine/schedule';
 import { autosave, isTauri, loadAutosave, saveProjectFile } from './file/planif';
 import { useProject } from './store/project';
+import { WorkCalendar } from './engine/calendar';
+import { projectProgress } from './engine/tracking';
 
 export default function App() {
   const s = useProject();
   const result = useMemo(() => schedule(s.project), [s.project]);
+  const progress = useMemo(() => {
+    const cal = new WorkCalendar(s.project.calendars.find((c) => c.id === s.project.calendarId) ?? s.project.calendars[0]);
+    return projectProgress(result, s.project.statusDate, cal);
+  }, [result, s.project.calendars, s.project.calendarId, s.project.statusDate]);
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
 
@@ -104,6 +110,10 @@ export default function App() {
         <span>{s.project.tasks.length} tareas</span>
         <span>Inicio: {fmt(result.projectStart)}</span>
         <span>Fin: {fmt(result.projectFinish)}</span>
+        <span>
+          Avance: {progress.actual}%{s.project.statusDate ? ` (planificado ${progress.planned}% al ${fmt(s.project.statusDate)})` : ''}
+        </span>
+        <span>{s.project.baseline ? `Línea base: ${fmt(s.project.baseline.savedAt.slice(0, 10))}` : 'Sin línea base'}</span>
         <span>{s.filePath ? s.filePath : 'Sin guardar en archivo'}</span>
         <span className="hint">
           Doble clic para editar · Arrastra una barra para moverla, su borde derecho para alargarla y el punto de un extremo hasta otra barra para

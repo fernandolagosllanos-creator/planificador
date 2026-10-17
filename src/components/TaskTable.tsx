@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { WorkCalendar } from '../engine/calendar';
+import { varianceOf } from '../engine/tracking';
 import type { ScheduleResult } from '../engine/schedule';
 import type { Task } from '../model/types';
 import { formatResourceNames } from '../engine/resources';
@@ -11,7 +13,7 @@ interface Props {
   result: ScheduleResult;
 }
 
-export const TABLE_COLUMNS = [
+const BASE_COLUMNS = [
   { key: 'row', label: '', width: 36 },
   { key: 'ind', label: '', width: 24 },
   { key: 'wbs', label: 'EDT', width: 56 },
@@ -24,7 +26,11 @@ export const TABLE_COLUMNS = [
   { key: 'resources', label: 'Recursos', width: 160 },
 ] as const;
 
-export const TABLE_WIDTH = TABLE_COLUMNS.reduce((s, c) => s + c.width, 0);
+const BASELINE_COLUMNS = [
+  { key: 'bstart', label: 'Comienzo LB', width: 100 },
+  { key: 'bfinish', label: 'Fin LB', width: 100 },
+  { key: 'varfin', label: 'Var. fin', width: 64 },
+] as const;
 
 function fmt(iso: string): string {
   const [y, m, d] = iso.split('-');
@@ -48,21 +54,28 @@ export function TaskTable({ result }: Props) {
   const setPredecessors = useProject((s) => s.setPredecessors);
   const setConstraint = useProject((s) => s.setConstraint);
   const setResourceNames = useProject((s) => s.setResourceNames);
+  const setPercentComplete = useProject((s) => s.setPercentComplete);
+  const columns = project.baseline ? [...BASE_COLUMNS, ...BASELINE_COLUMNS] : [...BASE_COLUMNS];
+  const tableWidth = columns.reduce((acc, c) => acc + c.width, 0);
+  const cal = useMemo(
+    () => new WorkCalendar(project.calendars.find((c) => c.id === project.calendarId) ?? project.calendars[0]),
+    [project.calendars, project.calendarId],
+  );
   const setError = useProject((s) => s.setError);
   const wbs = computeWbs(project.tasks);
 
   const [editing, setEditing] = useState<{ id: string; col: string } | null>(null);
 
   return (
-    <table className="task-table" style={{ width: TABLE_WIDTH }}>
+    <table className="task-table" style={{ width: tableWidth }}>
       <colgroup>
-        {TABLE_COLUMNS.map((c) => (
+        {columns.map((c) => (
           <col key={c.key} style={{ width: c.width }} />
         ))}
       </colgroup>
       <thead>
         <tr style={{ height: ROW_HEIGHT * 2 }}>
-          {TABLE_COLUMNS.map((c) => (
+          {columns.map((c) => (
             <th key={c.key}>{c.label}</th>
           ))}
         </tr>
@@ -149,11 +162,23 @@ export function TaskTable({ result }: Props) {
                 (v) => {
                   const n = parseInt(v, 10);
                   if (Number.isNaN(n) || n < 0 || n > 100) setError('El avance debe estar entre 0 y 100');
-                  else updateTask(t.id, { percentComplete: n });
+                  else setPercentComplete(t.id, n);
                 },
                 { editable: !s.isSummary, align: 'right' },
               )}
               {cell('resources', formatResourceNames(project, t.id), (v) => setResourceNames(t.id, v), { editable: !s.isSummary })}
+              {project.baseline &&
+                (() => {
+                  const v = varianceOf(s, project.baseline, cal);
+                  const vf = v ? v.finishVariance : null;
+                  return (
+                    <>
+                      <td className="muted">{v ? fmt(v.baselineStart) : '—'}</td>
+                      <td className="muted">{v ? fmt(v.baselineFinish) : '—'}</td>
+                      <td className={`right ${vf !== null && vf > 0 ? 'late' : ''}`}>{vf === null ? '—' : `${vf > 0 ? '+' : ''}${vf} d`}</td>
+                    </>
+                  );
+                })()}
             </tr>
           );
         })}

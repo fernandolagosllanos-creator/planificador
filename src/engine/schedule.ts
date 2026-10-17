@@ -135,7 +135,7 @@ export function schedule(project: Project): ScheduleResult {
   const children = computeChildren(tasks);
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const isSummary = (id: string) => (children.get(id)?.length ?? 0) > 0;
-  const durOf = (id: string) => Math.max(0, Math.round(byId.get(id)!.durationDays));
+  const durOf = (id: string) => durOverride.get(id) ?? Math.max(0, Math.round(byId.get(id)!.durationDays));
 
   // Las dependencias sobre tareas resumen se propagan a sus hojas.
   const leaves = (id: string): string[] =>
@@ -178,6 +178,7 @@ export function schedule(project: Project): ScheduleResult {
   const projStart = cal.nextWorkingDay(project.start);
   const early = new Map<string, Placement>();
   const conflict = new Set<string>();
+  const durOverride = new Map<string, number>();
 
   // Pasada hacia adelante.
   for (const id of [...topo, ...cycle]) {
@@ -241,6 +242,16 @@ export function schedule(project: Project): ScheduleResult {
           break;
         }
       }
+    }
+    // Las fechas reales mandan sobre todo lo demás: lo que ya pasó no se reprograma.
+    if (t.actualStart) {
+      const start = cal.nextWorkingDay(t.actualStart);
+      p = { start, finish: cal.addWorkingDays(start, span), eod: dur > 0 };
+    }
+    if (t.actualFinish) {
+      const finish = cal.prevWorkingDay(t.actualFinish);
+      p = { start: t.actualStart ? minDate(p.start, finish) : cal.addWorkingDays(finish, -span), finish, eod: dur > 0 };
+      durOverride.set(id, dur === 0 ? 0 : cal.workingDaysBetween(p.start, finish));
     }
     early.set(id, p);
   }

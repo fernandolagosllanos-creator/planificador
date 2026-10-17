@@ -5,7 +5,7 @@ import { WorkCalendar, defaultCalendar } from './calendar';
 import { computeWbs, formatPredecessors, linkError, parsePredecessors, schedule } from './schedule';
 
 function task(id: string, name: string, durationDays: number, level = 0, constraint: TaskConstraint = { type: 'ASAP', date: null }): Task {
-  return { id, name, level, durationDays, constraint, percentComplete: 0, notes: '' };
+  return { id, name, level, durationDays, constraint, percentComplete: 0, actualStart: null, actualFinish: null, notes: '' };
 }
 
 const fs = (id: string, from: string, to: string, lagDays = 0): Project['dependencies'][number] => ({ id, from, to, type: 'FS', lagDays });
@@ -15,6 +15,8 @@ function project(tasks: Task[], deps: Project['dependencies'] = []): Project {
     id: 'p',
     name: 'Prueba',
     start: '2026-11-02', // lunes
+    statusDate: null,
+    baseline: null,
     calendarId: 'cal-std',
     calendars: [defaultCalendar()],
     tasks,

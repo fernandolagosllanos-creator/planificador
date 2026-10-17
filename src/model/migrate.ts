@@ -11,15 +11,19 @@ export function normalizeProject(project: Project): Project {
     // Esquema 3: recursos y asignaciones.
     resources: project.resources ?? [],
     assignments: project.assignments ?? [],
+    // Esquema 4: línea base, fecha de estado y fechas reales.
+    statusDate: project.statusDate ?? null,
+    baseline: project.baseline ?? null,
   };
 }
 
 function normalizeTask(task: Task): Task {
-  if (task.constraint) return task;
   // Esquema 1: el inicio fijado a mano equivale a "No comenzar antes del".
   const { manualStart, ...rest } = task;
   return {
     ...rest,
-    constraint: manualStart ? { type: 'SNET', date: manualStart } : { type: 'ASAP', date: null },
+    constraint: task.constraint ?? (manualStart ? { type: 'SNET', date: manualStart } : { type: 'ASAP', date: null }),
+    actualStart: task.actualStart ?? null,
+    actualFinish: task.actualFinish ?? null,
   };
 }
