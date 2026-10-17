@@ -29,7 +29,7 @@ Las apps no están firmadas con certificado de desarrollador: en Mac la primera 
 
 - [Tauri 2](https://tauri.app) (Rust) para la aplicación de escritorio.
 - React 19 + TypeScript + Vite para la interfaz; estado con Zustand.
-- Motor de programación propio en `src/engine/` con pruebas en Vitest.
+- Motor de programación propio en `packages/core/src/engine/` con pruebas en Vitest.
 - Gantt dibujada en SVG, sin componentes con licencia.
 
 ## Desarrollo
@@ -39,11 +39,14 @@ Requisitos: Node 22+ y, para la versión de escritorio, Rust (`rustup`) con los 
 ```bash
 npm install
 npm run dev          # interfaz en el navegador (http://localhost:5173)
-npm test             # pruebas del motor y de los formatos
+npm test             # pruebas del motor y de los formatos (packages/core)
 npm run lint
+npm run typecheck
 npm run tauri dev    # aplicación de escritorio en modo desarrollo
 npm run tauri build  # instalador para el sistema actual
 ```
+
+Los comandos de la raíz operan sobre `apps/simple` (Planificador simple). Para trabajar dentro de un paquete concreto: `npm run <script> -w apps/simple` o `-w packages/core`.
 
 En el navegador, "Guardar" descarga el archivo `.planif` y "Abrir" lo sube; en la aplicación de escritorio se usan los diálogos nativos.
 
@@ -55,38 +58,45 @@ TAURI_SIGNING_PRIVATE_KEY_PATH=~/.tauri/planificador.key TAURI_SIGNING_PRIVATE_K
 
 ## Publicar una versión
 
-1. Sube el número de versión en `package.json`, `src-tauri/tauri.conf.json` y `src-tauri/Cargo.toml` (los tres iguales).
-2. Confirma el cambio y crea la etiqueta:
+1. Sube el número de versión en `apps/simple/package.json`, `apps/simple/src-tauri/tauri.conf.json` y `apps/simple/src-tauri/Cargo.toml` (los tres iguales).
+2. Confirma el cambio y crea la etiqueta con el prefijo del producto:
 
 ```bash
-git tag v0.2.0
-git push origin main v0.2.0
+git tag simple-v0.3.0
+git push origin main simple-v0.3.0
 ```
 
 GitHub Actions (`.github/workflows/build.yml`) corre las pruebas, compila los instaladores de Windows y Mac (Apple Silicon e Intel) y publica un *Release* con los instaladores, los paquetes de actualización firmados y el manifiesto `latest.json` que consultan las apps instaladas. Los secretos `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` del repositorio deben corresponder a la clave pública de `tauri.conf.json`; si se pierde la clave privada, las apps ya instaladas no aceptarán más actualizaciones.
 
 ## Formato del archivo `.planif`
 
-Un ZIP con `project.json`: el proyecto (tareas, dependencias, calendario, recursos, asignaciones, línea base, fecha de estado) más las fechas calculadas, para que otras herramientas puedan leerlo. `schemaVersion` permite abrir archivos de versiones anteriores con migración automática (`src/model/migrate.ts`).
+Un ZIP con `project.json`: el proyecto (tareas, dependencias, calendario, recursos, asignaciones, línea base, fecha de estado) más las fechas calculadas, para que otras herramientas puedan leerlo. `schemaVersion` permite abrir archivos de versiones anteriores con migración automática (`packages/core/src/model/migrate.ts`).
 
 ## Estructura
 
+El repositorio es un monorepo (npm workspaces): un núcleo compartido y una aplicación por producto. Planificador Jira, cuando exista, será `apps/jira` y usará el mismo núcleo.
+
 ```
-src/
-  model/types.ts          Tipos del proyecto
-  model/migrate.ts        Migración de archivos antiguos
-  engine/calendar.ts      Calendario laboral y aritmética de fechas
-  engine/schedule.ts      Motor: dependencias, restricciones, resumen, ruta crítica
-  engine/resources.ts     Carga de recursos y sobreasignación
-  engine/tracking.ts      Línea base, variaciones y línea de progreso
-  engine/*.test.ts        Pruebas
-  file/planif.ts          Archivo .planif y diálogos de abrir/guardar
-  file/mspdi.ts           XML de Microsoft Project
-  file/tabular.ts         Excel y CSV
-  file/report.ts          Informe imprimible
-  store/project.ts        Estado, deshacer/rehacer, proyecto de ejemplo
-  components/             Tabla, Gantt, detalle, recursos, carga, calendario, barra
-  updater.ts              Actualizaciones automáticas
-src-tauri/                Aplicación Tauri (Rust): comandos, permisos, iconos
-.github/workflows/        Compilación de instaladores y publicación
+packages/core/src/          Núcleo compartido (@planificador/core)
+  model/types.ts            Tipos del proyecto
+  model/migrate.ts          Migración de archivos antiguos
+  engine/calendar.ts        Calendario laboral y aritmética de fechas
+  engine/schedule.ts        Motor: dependencias, restricciones, resumen, ruta crítica
+  engine/resources.ts       Carga de recursos y sobreasignación
+  engine/tracking.ts        Línea base, variaciones y línea de progreso
+  engine/*.test.ts          Pruebas
+  file/planif.ts            Archivo .planif y diálogos de abrir/guardar
+  file/mspdi.ts             XML de Microsoft Project
+  file/tabular.ts           Excel y CSV
+  file/report.ts            Informe imprimible
+  store/project.ts          Estado, deshacer/rehacer, proyecto de ejemplo
+  components/               Tabla, Gantt, detalle, recursos, carga, calendario
+  updater.ts                Actualizaciones automáticas
+  appInfo.ts                Nombre y versión de la app que usa el núcleo
+  index.css                 Estilos compartidos
+apps/simple/                Planificador simple
+  src/App.tsx               Pantalla principal
+  src/components/Toolbar.tsx  Barra de herramientas
+  src-tauri/                Aplicación Tauri (Rust): comandos, permisos, iconos
+.github/workflows/          Compilación de instaladores y publicación
 ```

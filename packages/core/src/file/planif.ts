@@ -4,9 +4,8 @@ import { PLANIF_FORMAT, PLANIF_SCHEMA_VERSION } from '../model/types';
 import { schedule } from '../engine/schedule';
 import { normalizeProject } from '../model/migrate';
 
-import pkg from '../../package.json';
+import { appName, appVersion } from '../appInfo';
 
-export const APP_VERSION: string = pkg.version;
 export const FILE_EXTENSION = 'planif';
 
 interface PlanifDocument {
@@ -24,7 +23,7 @@ export function serializeProject(project: Project): Uint8Array {
   const doc: PlanifDocument = {
     format: PLANIF_FORMAT,
     schemaVersion: PLANIF_SCHEMA_VERSION,
-    app: { name: 'Planificador', version: APP_VERSION },
+    app: { name: appName(), version: appVersion() },
     savedAt: new Date().toISOString(),
     project,
     computed: result.order.map((t) => ({ id: t.id, start: t.start, finish: t.finish, percentComplete: t.percentComplete })),

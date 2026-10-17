@@ -1,0 +1,22 @@
+// Punto de entrada del núcleo compartido (@planificador/core).
+export * from './appInfo';
+export * from './model/types';
+export * from './model/migrate';
+export * from './engine/calendar';
+export * from './engine/schedule';
+export * from './engine/outline';
+export * from './engine/resources';
+export * from './engine/tracking';
+export * from './file/planif';
+export * from './file/mspdi';
+export * from './file/tabular';
+export * from './file/report';
+export * from './store/project';
+export * from './updater';
+export * from './components/layout';
+export { CalendarDialog } from './components/CalendarDialog';
+export { Gantt } from './components/Gantt';
+export { ResourceLoad } from './components/ResourceLoad';
+export { ResourceSheet } from './components/ResourceSheet';
+export { TaskDetail } from './components/TaskDetail';
+export { TaskTable } from './components/TaskTable';
