@@ -61,8 +61,18 @@ body { background: #fff; padding: 16px 20px; }
 .print-hint { background: #fef3c7; color: #92400e; padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 10px; }
 .gantt .handle, .gantt .resize { display: none; }
 @page { size: A3 landscape; margin: 10mm; }
-@media print { .print-hint { display: none; } body { padding: 0; } .report-body { zoom: 0.85; } }
+@media print { .print-hint { display: none; } body { padding: 0; } }
 </style>
+<script>
+// Al imprimir, encoge el contenido para que tabla y Gantt quepan en el ancho de la hoja (A3 horizontal ≈ 1500 px).
+window.addEventListener('beforeprint', function () {
+  var body = document.querySelector('.report-body');
+  body.style.zoom = String(Math.min(1, 1500 / body.scrollWidth));
+});
+window.addEventListener('afterprint', function () {
+  document.querySelector('.report-body').style.zoom = '';
+});
+</script>
 </head>
 <body>
 <div class="print-hint">Para obtener el PDF: Imprimir (Ctrl+P o ⌘P) → Guardar como PDF. Conviene papel A3 u orientación horizontal.</div>
