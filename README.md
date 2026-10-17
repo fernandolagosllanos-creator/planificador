@@ -1,6 +1,11 @@
 # Planificador
 
-Aplicación de escritorio (Windows y Mac) para planificar proyectos con carta Gantt, pensada para cubrir las funciones más usadas de Microsoft Project sin servidor ni licencias. Cada proyecto se guarda como un archivo `.planif` que se puede copiar a otro equipo y abrir allí.
+Aplicaciones de escritorio (Windows y Mac) para planificar proyectos con carta Gantt, pensadas para cubrir las funciones más usadas de Microsoft Project sin servidor ni licencias. Cada proyecto se guarda como un archivo `.planif` que se puede copiar a otro equipo y abrir allí.
+
+Dos productos salen de este repositorio:
+
+- **Planificador simple** (`apps/simple`): el planificador de siempre.
+- **Planificador Jira** (`apps/jira`): el mismo planificador, conectado con Jira Cloud. Se configura una cuenta (correo + token de API, guardados en el llavero del sistema), se elige un proyecto de Jira y se vincula con el proyecto del planificador. En la etapa 2 ya conecta, vincula el proyecto y lista sus incidencias; alinear tareas con incidencias, el tablero simplificado y la escritura de estados, comentarios y fechas llegan en las etapas siguientes.
 
 ## Qué hace (versión 1)
 
@@ -17,11 +22,13 @@ Aplicación de escritorio (Windows y Mac) para planificar proyectos con carta Ga
 
 ## Instalación
 
-Descarga el instalador desde la pestaña [Releases](../../releases/latest):
+Descarga el instalador desde la pestaña [Releases](../../releases): los de Planificador simple se llaman `simple-vX.Y.Z` y los de Planificador Jira `jira-vX.Y.Z` (marcados como pre-release). En cada uno:
 
-- Windows: `Planificador_x.y.z_x64-setup.exe`.
-- Mac con chip Apple (M1 en adelante): `Planificador_x.y.z_aarch64.dmg`.
-- Mac con Intel: `Planificador_x.y.z_x64.dmg`.
+- Windows: `..._x.y.z_x64-setup.exe`.
+- Mac con chip Apple (M1 en adelante): `..._x.y.z_aarch64.dmg`.
+- Mac con Intel: `..._x.y.z_x64.dmg`.
+
+Las dos apps pueden convivir en el mismo computador.
 
 Las apps no están firmadas con certificado de desarrollador: en Mac la primera vez hay que abrirlas con clic derecho → Abrir; en Windows, "Más información → Ejecutar de todas formas". Las versiones siguientes se instalan solas desde la aplicación (barra de estado → *buscar actualizaciones*, o al iniciar).
 
@@ -44,9 +51,14 @@ npm run lint
 npm run typecheck
 npm run tauri dev    # aplicación de escritorio en modo desarrollo
 npm run tauri build  # instalador para el sistema actual
+
+npm run dev:jira         # Planificador Jira en el navegador (http://localhost:5174; sin conexión a Jira)
+npm run tauri:jira dev   # Planificador Jira de escritorio (con conexión a Jira)
 ```
 
-Los comandos de la raíz operan sobre `apps/simple` (Planificador simple). Para trabajar dentro de un paquete concreto: `npm run <script> -w apps/simple` o `-w packages/core`.
+Los comandos `dev`, `tauri` y `typecheck` de la raíz operan sobre `apps/simple`; `dev:jira` y `tauri:jira` sobre `apps/jira`; `build` y `typecheck` compilan las dos. Para trabajar dentro de un paquete concreto: `npm run <script> -w apps/jira` o `-w packages/core`.
+
+La conexión con Jira solo existe en la aplicación de escritorio: las llamadas a la API y el token viven en el lado Rust (`apps/jira/src-tauri/src/lib.rs`), y el token se guarda en el Llavero (Mac) o el Administrador de credenciales (Windows). En el navegador la app muestra el planificador sin Jira.
 
 En el navegador, "Guardar" descarga el archivo `.planif` y "Abrir" lo sube; en la aplicación de escritorio se usan los diálogos nativos.
 
@@ -58,23 +70,24 @@ TAURI_SIGNING_PRIVATE_KEY_PATH=~/.tauri/planificador.key TAURI_SIGNING_PRIVATE_K
 
 ## Publicar una versión
 
-1. Sube el número de versión en `apps/simple/package.json`, `apps/simple/src-tauri/tauri.conf.json` y `apps/simple/src-tauri/Cargo.toml` (los tres iguales).
+1. Sube el número de versión de la app en su `package.json`, `src-tauri/tauri.conf.json` y `src-tauri/Cargo.toml` (los tres iguales).
 2. Confirma el cambio y crea la etiqueta con el prefijo del producto:
 
 ```bash
-git tag simple-v0.3.0
+git tag simple-v0.3.0        # Planificador simple
+git tag jira-v0.1.0          # Planificador Jira
 git push origin main simple-v0.3.0
 ```
 
-GitHub Actions (`.github/workflows/build.yml`) corre las pruebas, compila los instaladores de Windows y Mac (Apple Silicon e Intel) y publica un *Release* con los instaladores, los paquetes de actualización firmados y el manifiesto `latest.json` que consultan las apps instaladas. Los secretos `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` del repositorio deben corresponder a la clave pública de `tauri.conf.json`; si se pierde la clave privada, las apps ya instaladas no aceptarán más actualizaciones.
+GitHub Actions (`.github/workflows/build.yml`) corre las pruebas, compila los instaladores de Windows y Mac (Apple Silicon e Intel) de la app de la etiqueta y publica un *Release* con los instaladores, los paquetes de actualización firmados y el manifiesto `latest.json` que consultan las apps instaladas. Planificador simple lee `releases/latest/download/latest.json`; Planificador Jira, cuyos releases son pre-release para no desplazar a ese "latest", lee `updates/jira/latest.json` de la rama `main`, que el flujo actualiza solo al publicar una etiqueta `jira-v*`. Los secretos `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` del repositorio deben corresponder a la clave pública de `tauri.conf.json`; si se pierde la clave privada, las apps ya instaladas no aceptarán más actualizaciones.
 
 ## Formato del archivo `.planif`
 
-Un ZIP con `project.json`: el proyecto (tareas, dependencias, calendario, recursos, asignaciones, línea base, fecha de estado) más las fechas calculadas, para que otras herramientas puedan leerlo. `schemaVersion` permite abrir archivos de versiones anteriores con migración automática (`packages/core/src/model/migrate.ts`).
+Un ZIP con `project.json`: el proyecto (tareas, dependencias, calendario, recursos, asignaciones, línea base, fecha de estado y, en Planificador Jira, la sección `jira` con el proyecto vinculado y los vínculos tarea–incidencia, nunca credenciales) más las fechas calculadas, para que otras herramientas puedan leerlo. `schemaVersion` permite abrir archivos de versiones anteriores con migración automática (`packages/core/src/model/migrate.ts`).
 
 ## Estructura
 
-El repositorio es un monorepo (npm workspaces): un núcleo compartido y una aplicación por producto. Planificador Jira, cuando exista, será `apps/jira` y usará el mismo núcleo.
+El repositorio es un monorepo (npm workspaces): un núcleo compartido y una aplicación por producto. Las dos apps usan el mismo núcleo; `AppShell` y `Toolbar` aceptan vistas, menús y elementos de la barra de estado adicionales, que es como Planificador Jira añade lo suyo.
 
 ```
 packages/core/src/          Núcleo compartido (@planificador/core)
@@ -90,13 +103,20 @@ packages/core/src/          Núcleo compartido (@planificador/core)
   file/tabular.ts           Excel y CSV
   file/report.ts            Informe imprimible
   store/project.ts          Estado, deshacer/rehacer, proyecto de ejemplo
-  components/               Tabla, Gantt, detalle, recursos, carga, calendario
+  components/               Pantalla principal (AppShell), barra, tabla, Gantt, detalle, recursos, carga, calendario
   updater.ts                Actualizaciones automáticas
   appInfo.ts                Nombre y versión de la app que usa el núcleo
   index.css                 Estilos compartidos
 apps/simple/                Planificador simple
-  src/App.tsx               Pantalla principal
-  src/components/Toolbar.tsx  Barra de herramientas
+  src/App.tsx               Usa AppShell tal cual
   src-tauri/                Aplicación Tauri (Rust): comandos, permisos, iconos
+apps/jira/                  Planificador Jira
+  src/App.tsx               AppShell + menú Jira, vista Jira y estado de conexión
+  src/jira/client.ts        Cliente de la API de Jira (vía el comando Rust jira_request)
+  src/jira/store.ts         Estado de la conexión (Zustand)
+  src/jira/ConnectDialog.tsx  Asistente: cuenta → proyecto → campos de fecha
+  src/jira/JiraView.tsx     Incidencias del proyecto vinculado
+  src-tauri/src/lib.rs      Credenciales en el llavero y llamadas a Jira
+updates/jira/latest.json    Manifiesto de actualización de Planificador Jira (lo escribe el flujo)
 .github/workflows/          Compilación de instaladores y publicación
 ```

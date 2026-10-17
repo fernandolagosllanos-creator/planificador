@@ -8,11 +8,13 @@
   ],
   "scripts": {
     "dev": "npm run dev -w apps/simple",
-    "build": "npm run build -w apps/simple",
+    "dev:jira": "npm run dev -w apps/jira",
+    "build": "npm run build -w apps/simple && npm run build -w apps/jira",
     "test": "npm test -w packages/core",
     "lint": "oxlint",
-    "typecheck": "npm run typecheck -w packages/core && npm run typecheck -w apps/simple",
-    "tauri": "npm run tauri -w apps/simple --"
+    "typecheck": "npm run typecheck -w packages/core && npm run typecheck -w apps/simple && npm run typecheck -w apps/jira",
+    "tauri": "npm run tauri -w apps/simple --",
+    "tauri:jira": "npm run tauri -w apps/jira --"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

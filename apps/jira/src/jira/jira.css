@@ -1,0 +1,158 @@
+/* Estilos propios de Planificador Jira (complementan los del núcleo). */
+
+.jira-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  gap: 10px;
+  overflow: hidden;
+}
+.jira-view.empty {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+.jira-view h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.jira-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.jira-head p {
+  margin: 4px 0 0;
+}
+.jira-view .actions {
+  display: flex;
+  gap: 6px;
+}
+.jira-issues {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+.jira-issues table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.jira-issues th {
+  position: sticky;
+  top: 0;
+  background: var(--panel, #f8fafc);
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-strong);
+  font-weight: 600;
+}
+.jira-issues td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.jira-issues a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.chip.status-new {
+  background: #e2e8f0;
+  color: #334155;
+}
+.chip.status-indeterminate {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.chip.status-done {
+  background: #dcfce7;
+  color: #166534;
+}
+.jira-foot {
+  margin: 0;
+}
+
+/* Asistente de conexión */
+.jira-connect {
+  width: min(640px, 94vw);
+}
+.jira-connect .steps {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 8px 16px;
+  list-style: none;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.jira-connect .steps .active {
+  color: var(--accent);
+  font-weight: 600;
+}
+.jira-connect .steps .done {
+  color: var(--text);
+}
+.jira-connect .form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.jira-connect .form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+.jira-connect .form input,
+.jira-connect .form select {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.jira-connect .form p {
+  margin: 0;
+}
+.jira-connect .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+.jira-connect .project-list {
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.jira-connect .project-row {
+  display: grid;
+  grid-template-columns: 20px 80px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  flex-direction: row !important;
+}
+.jira-connect .project-row.selected {
+  background: var(--accent-soft);
+}
+.jira-connect .project-row .key {
+  font-weight: 600;
+}
+.jira-connect .error-bar {
+  margin-bottom: 10px;
+}
+.jira-status {
+  cursor: pointer;
+}

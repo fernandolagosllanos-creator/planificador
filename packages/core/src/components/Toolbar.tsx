@@ -1,29 +1,23 @@
-import { useState } from 'react';
-import {
-  CalendarDialog,
-  WorkCalendar,
-  buildPrintReport,
-  exportMspdi,
-  importMspdi,
-  isTauri,
-  openBytes,
-  openProjectFile,
-  openWithSystem,
-  safeFileName,
-  saveBytes,
-  saveProjectFile,
-  schedule,
-  taskRows,
-  toCsv,
-  toXlsx,
-  today,
-  useProject,
-  type View,
-  type Zoom,
-} from '@planificador/core';
+import { useState, type ReactNode } from 'react';
 import { strToU8 } from 'fflate';
+import { BASE_VIEWS, useProject, type View, type Zoom } from '../store/project';
+import { CalendarDialog } from './CalendarDialog';
+import { today } from '../engine/calendar';
+import { openBytes, openProjectFile, openWithSystem, safeFileName, saveBytes, saveProjectFile, isTauri } from '../file/planif';
+import { exportMspdi, importMspdi } from '../file/mspdi';
+import { taskRows, toCsv, toXlsx } from '../file/tabular';
+import { buildPrintReport } from '../file/report';
+import { schedule } from '../engine/schedule';
+import { WorkCalendar } from '../engine/calendar';
 
-export function Toolbar() {
+export interface ToolbarProps {
+  /** Botones de vista; por defecto Gantt, Recursos y Carga. */
+  views?: [View, string][];
+  /** Grupo adicional (por ejemplo el menú Jira), a la derecha del calendario. */
+  extra?: ReactNode;
+}
+
+export function Toolbar({ views = BASE_VIEWS, extra }: ToolbarProps = {}) {
   const s = useProject();
   const sel = s.selectedId;
   const [showCalendar, setShowCalendar] = useState(false);
@@ -178,13 +172,7 @@ export function Toolbar() {
       </div>
       <div className="sep" />
       <div className="group views">
-        {(
-          [
-            ['gantt', 'Gantt'],
-            ['resources', 'Recursos'],
-            ['load', 'Carga'],
-          ] as [View, string][]
-        ).map(([v, label]) => (
+        {views.map(([v, label]) => (
           <button key={v} className={s.view === v ? 'active' : ''} onClick={() => s.setView(v)}>
             {label}
           </button>
@@ -196,6 +184,12 @@ export function Toolbar() {
           Calendario…
         </button>
       </div>
+      {extra && (
+        <>
+          <div className="sep" />
+          <div className="group">{extra}</div>
+        </>
+      )}
       <div className="sep" />
       <div className="group">
         <label>
@@ -230,7 +224,7 @@ export function Toolbar() {
 }
 
 /** Menú desplegable sencillo: un botón que muestra una lista de acciones. */
-function Menu({ label, children }: { label: string; children: React.ReactNode }) {
+export function Menu({ label, children }: { label: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="menu" onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setOpen(false)}>
