@@ -733,3 +733,27 @@ button.link {
 .menu-list button:hover {
   background: var(--accent-soft);
 }
+
+/* Contraer resúmenes y arrastrar filas */
+.task-table button.collapse {
+  border: none;
+  background: none;
+  padding: 0 4px 0 0;
+  font: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.task-table td.row-num {
+  cursor: grab;
+}
+.task-table.row-dragging,
+.task-table.row-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+.task-table tr.drop-before td {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+.task-table tr.drop-after td {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}

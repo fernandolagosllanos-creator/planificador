@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { WorkCalendar } from '../engine/calendar';
 import { varianceOf } from '../engine/tracking';
+import { visibleTaskIds } from '../engine/outline';
 import type { ScheduleResult } from '../engine/schedule';
 import type { Task } from '../model/types';
 import { formatResourceNames } from '../engine/resources';
@@ -55,6 +56,41 @@ export function TaskTable({ result }: Props) {
   const setConstraint = useProject((s) => s.setConstraint);
   const setResourceNames = useProject((s) => s.setResourceNames);
   const setPercentComplete = useProject((s) => s.setPercentComplete);
+  const toggleCollapse = useProject((s) => s.toggleCollapse);
+  const moveTaskTo = useProject((s) => s.moveTaskTo);
+  const visible = visibleTaskIds(project.tasks);
+  const visibleTasks = project.tasks.filter((t) => visible.has(t.id));
+
+  // Arrastre de filas con el mouse: se toma la fila por su número y se suelta entre dos filas.
+  const [rowDrag, setRowDrag] = useState<{ id: string; before: string | null | undefined } | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const startRowDrag = (e: React.PointerEvent, id: string) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    select(id);
+    let current: string | null | undefined = undefined;
+    const onMove = (ev: PointerEvent) => {
+      const tr = (document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null)?.closest('tr[data-id]') as HTMLElement | null;
+      if (!tr) return;
+      const rect = tr.getBoundingClientRect();
+      const overId = tr.dataset.id!;
+      if (ev.clientY < rect.top + rect.height / 2) current = overId;
+      else {
+        const idx = visibleTasks.findIndex((t) => t.id === overId);
+        current = idx + 1 < visibleTasks.length ? visibleTasks[idx + 1].id : null;
+      }
+      setRowDrag({ id, before: current });
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      setRowDrag(null);
+      if (current !== undefined && current !== id) moveTaskTo(id, current);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    setRowDrag({ id, before: undefined });
+  };
   const columns = project.baseline ? [...BASE_COLUMNS, ...BASELINE_COLUMNS] : [...BASE_COLUMNS];
   const tableWidth = columns.reduce((acc, c) => acc + c.width, 0);
   const cal = useMemo(
@@ -67,7 +103,7 @@ export function TaskTable({ result }: Props) {
   const [editing, setEditing] = useState<{ id: string; col: string } | null>(null);
 
   return (
-    <table className="task-table" style={{ width: tableWidth }}>
+    <table className={`task-table ${rowDrag ? 'row-dragging' : ''}`} style={{ width: tableWidth }} ref={tableRef}>
       <colgroup>
         {columns.map((c) => (
           <col key={c.key} style={{ width: c.width }} />
@@ -81,10 +117,17 @@ export function TaskTable({ result }: Props) {
         </tr>
       </thead>
       <tbody>
-        {project.tasks.map((t, i) => {
+        {visibleTasks.map((t) => {
           const s = result.tasks.get(t.id)!;
+          const i = s.row - 1;
           const isSel = selectedId === t.id;
-          const cls = [isSel ? 'selected' : '', s.isSummary ? 'summary' : '', result.cycle.includes(t.id) ? 'cycle' : '']
+          const cls = [
+            isSel ? 'selected' : '',
+            s.isSummary ? 'summary' : '',
+            result.cycle.includes(t.id) ? 'cycle' : '',
+            rowDrag?.before === t.id ? 'drop-before' : '',
+            rowDrag && rowDrag.before === null && t.id === visibleTasks[visibleTasks.length - 1].id ? 'drop-after' : '',
+          ]
             .filter(Boolean)
             .join(' ');
           const cell = (col: string, value: string, commit: (v: string) => void, opts: { editable?: boolean; align?: string } = {}) => {
@@ -106,14 +149,28 @@ export function TaskTable({ result }: Props) {
                     onCancel={() => setEditing(null)}
                   />
                 ) : (
-                  <span style={col === 'name' ? { paddingLeft: 4 + t.level * 16 } : undefined}>{value}</span>
+                  <span style={col === 'name' ? { paddingLeft: 4 + t.level * 16 } : undefined}>
+                    {col === 'name' && s.isSummary && (
+                      <button
+                        className="collapse"
+                        title={t.collapsed ? 'Expandir subtareas' : 'Contraer subtareas'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCollapse(t.id);
+                        }}
+                      >
+                        {t.collapsed ? '▸' : '▾'}
+                      </button>
+                    )}
+                    {value}
+                  </span>
                 )}
               </td>
             );
           };
           return (
-            <tr key={t.id} className={cls} style={{ height: ROW_HEIGHT }} data-row={i + 1}>
-              <td className="row-num" onClick={() => select(t.id)}>
+            <tr key={t.id} className={cls} style={{ height: ROW_HEIGHT }} data-row={i + 1} data-id={t.id}>
+              <td className="row-num" onClick={() => select(t.id)} onPointerDown={(e) => startRowDrag(e, t.id)} title="Arrastra para mover la fila">
                 {i + 1}
               </td>
               <td className="indicator" onClick={() => select(t.id)} title={indicatorTitle(t.constraint, s.constraintConflict)}>

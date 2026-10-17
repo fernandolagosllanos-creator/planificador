@@ -4,6 +4,7 @@ import { initialsOf, parseResourceNames } from '../engine/resources';
 import { defaultCalendar, today } from '../engine/calendar';
 import { linkError, parsePredecessors, schedule, subtreeIds } from '../engine/schedule';
 import { takeBaseline } from '../engine/tracking';
+import { groupTasks, linkedComponent, moveTaskBefore, ungroupTask } from '../engine/outline';
 
 export type Zoom = 'day' | 'week' | 'month';
 export type View = 'gantt' | 'resources' | 'load';
@@ -182,6 +183,12 @@ export interface ProjectState {
   indent: (id: string) => void;
   outdent: (id: string) => void;
   moveTask: (id: string, direction: -1 | 1) => void;
+  /** Deja la tarea (con sus subtareas) antes de `beforeId`, o al final si es null. */
+  moveTaskTo: (id: string, beforeId: string | null) => void;
+  /** Agrupa la tarea y las vinculadas a ella bajo un resumen nuevo. */
+  groupLinked: (id: string) => void;
+  ungroup: (id: string) => void;
+  toggleCollapse: (id: string) => void;
 
   loadProject: (p: Project, filePath: string | null) => void;
   newProject: () => void;
@@ -413,6 +420,43 @@ export const useProject = create<ProjectState>((set, get) => ({
       const level = t.level;
       for (let i = idx + ids.length; i < p.tasks.length && p.tasks[i].level >= level; i++) p.tasks[i].level++;
       for (const sid of ids) p.tasks.find((x) => x.id === sid)!.level--;
+    }),
+
+  moveTaskTo: (id, beforeId) => get().mutate((p) => void (p.tasks = moveTaskBefore(p, id, beforeId))),
+
+  groupLinked: (id) => {
+    const { project } = get();
+    const ids = linkedComponent(project, id);
+    if (ids.length < 2) {
+      set({ error: 'La tarea seleccionada no tiene vínculos con otras tareas del mismo nivel. Vincúlala primero (columna Predecesoras o arrastrando en la Gantt).' });
+      return;
+    }
+    let summaryId = '';
+    try {
+      get().mutate((p) => {
+        const r = groupTasks(p, ids, 'Grupo de tareas');
+        p.tasks = r.tasks;
+        summaryId = r.summaryId;
+      });
+    } catch (e) {
+      set({ error: (e as Error).message });
+      return;
+    }
+    set({ selectedId: summaryId });
+  },
+
+  ungroup: (id) => {
+    try {
+      get().mutate((p) => void (p.tasks = ungroupTask(p, id)));
+    } catch (e) {
+      set({ error: (e as Error).message });
+    }
+  },
+
+  toggleCollapse: (id) =>
+    get().mutate((p) => {
+      const t = p.tasks.find((x) => x.id === id);
+      if (t) t.collapsed = !t.collapsed;
     }),
 
   moveTask: (id, direction) =>

@@ -79,6 +79,8 @@ export interface Task {
   actualStart: ISODate | null;
   actualFinish: ISODate | null;
   notes: string;
+  /** Resumen contraído: sus subtareas no se muestran. */
+  collapsed?: boolean;
   /** Solo en archivos de esquema 1: inicio fijado a mano. Se migra a una restricción SNET. */
   manualStart?: ISODate | null;
 }

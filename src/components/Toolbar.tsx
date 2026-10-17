@@ -132,6 +132,12 @@ export function Toolbar() {
         <button onClick={() => sel && s.outdent(sel)} disabled={!sel} title="Anular sangría (Alt+Shift+←)">
           ← Anular
         </button>
+        <button onClick={() => sel && s.groupLinked(sel)} disabled={!sel} title="Reúne la tarea seleccionada y las vinculadas a ella bajo una tarea resumen nueva">
+          Agrupar vinculadas
+        </button>
+        <button onClick={() => sel && s.ungroup(sel)} disabled={!sel} title="Quita la tarea resumen seleccionada y sube sus subtareas un nivel">
+          Desagrupar
+        </button>
         <button onClick={() => sel && s.moveTask(sel, -1)} disabled={!sel} title="Subir">
           ↑
         </button>

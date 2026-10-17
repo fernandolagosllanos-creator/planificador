@@ -4,6 +4,7 @@ import { addDays, diffDays, parseDate, today } from '../engine/calendar';
 import { WorkCalendar } from '../engine/calendar';
 import { formatResourceNames } from '../engine/resources';
 import { progressPoints, varianceOf } from '../engine/tracking';
+import { visibleTaskIds } from '../engine/outline';
 import { useProject, type Zoom } from '../store/project';
 import { HEADER_HEIGHT, ROW_HEIGHT } from './layout';
 
@@ -65,7 +66,11 @@ export function Gantt({ result }: Props) {
   if (todayIso > rangeEnd) rangeEnd = addDays(todayIso, 7);
   const totalDays = diffDays(rangeStart, rangeEnd) + 1;
   const width = Math.ceil(totalDays * pxPerDay);
-  const height = HEADER_HEIGHT + result.order.length * ROW_HEIGHT;
+  // Filas visibles: los resúmenes contraídos ocultan sus subtareas.
+  const visible = visibleTaskIds(project.tasks);
+  const rows = result.order.filter((t) => visible.has(t.id));
+  const rowIndex = new Map(rows.map((t, i) => [t.id, i]));
+  const height = HEADER_HEIGHT + rows.length * ROW_HEIGHT;
 
   const x = (iso: string) => diffDays(rangeStart, iso) * pxPerDay;
   const xEnd = (iso: string) => x(iso) + pxPerDay; // fin del día, inclusive
@@ -116,7 +121,7 @@ export function Gantt({ result }: Props) {
     }
   }
 
-  const rowY = (row: number) => HEADER_HEIGHT + (row - 1) * ROW_HEIGHT;
+  const rowY = (id: string) => HEADER_HEIGHT + (rowIndex.get(id) ?? 0) * ROW_HEIGHT;
   const byId = result.tasks;
   const nameOf = (id: string) => project.tasks.find((p) => p.id === id)?.name ?? '';
   const resourcesOf = (id: string) => formatResourceNames(project, id).replace(/;/g, ', ');
@@ -181,7 +186,7 @@ export function Gantt({ result }: Props) {
     if (drag.kind === 'link') {
       const { px, py } = svgPoint(e);
       const row = Math.floor((py - HEADER_HEIGHT) / ROW_HEIGHT);
-      const over = row >= 0 && row < result.order.length ? result.order[row] : null;
+      const over = row >= 0 && row < rows.length ? rows[row] : null;
       setDrag({ ...drag, px, py, overId: over && over.id !== drag.id && !over.isSummary ? over.id : null });
     } else {
       setDrag({ ...drag, dx: e.clientX - drag.originX });
@@ -212,9 +217,9 @@ export function Gantt({ result }: Props) {
     .map((d) => {
       const a = byId.get(d.from);
       const b = byId.get(d.to);
-      if (!a || !b) return null;
-      const ay = rowY(a.row) + ROW_HEIGHT / 2;
-      const by = rowY(b.row) + ROW_HEIGHT / 2;
+      if (!a || !b || !rowIndex.has(a.id) || !rowIndex.has(b.id)) return null;
+      const ay = rowY(a.id) + ROW_HEIGHT / 2;
+      const by = rowY(b.id) + ROW_HEIGHT / 2;
       const fromX = d.type === 'SS' || d.type === 'SF' ? x(a.start) : xEnd(a.finish);
       const toX = d.type === 'FF' || d.type === 'SF' ? xEnd(b.finish) : x(b.start);
       const dir = by > ay ? 1 : -1;
@@ -250,7 +255,10 @@ export function Gantt({ result }: Props) {
   const progress = statusDate ? progressPoints(result, statusDate, cal) : [];
   const sx = statusDate ? x(statusDate) + pxPerDay : 0;
   const progressPath = statusDate
-    ? `M${sx},${HEADER_HEIGHT} ` + progress.map((p) => `L${x(p.date) + (p.date < statusDate ? pxPerDay : pxPerDay)},${rowY(p.row) + ROW_HEIGHT / 2}`).join(' ') + ` L${sx},${height}`
+    ? `M${sx},${HEADER_HEIGHT} ` + progress
+        .filter((p) => rowIndex.has(result.order[p.row - 1].id))
+        .map((p) => `L${x(p.date) + pxPerDay},${rowY(result.order[p.row - 1].id) + ROW_HEIGHT / 2}`)
+        .join(' ') + ` L${sx},${height}`
     : '';
 
   const dragging = drag && drag.kind !== 'link' ? byId.get(drag.id) : undefined;
@@ -268,11 +276,11 @@ export function Gantt({ result }: Props) {
       onPointerCancel={() => setDrag(null)}
     >
       {/* Fondo de filas */}
-      {result.order.map((t, i) => (
+      {rows.map((t, i) => (
         <rect
           key={t.id}
           x={0}
-          y={rowY(t.row)}
+          y={rowY(t.id)}
           width={width}
           height={ROW_HEIGHT}
           className={`gantt-row ${i % 2 ? 'odd' : ''} ${t.id === selectedId ? 'selected' : ''} ${
@@ -331,10 +339,10 @@ export function Gantt({ result }: Props) {
 
       {/* Línea base: barra gris bajo cada tarea */}
       {project.baseline &&
-        result.order.map((t) => {
+        rows.map((t) => {
           const v = varianceOf(t, project.baseline, cal);
           if (!v) return null;
-          const y = rowY(t.row);
+          const y = rowY(t.id);
           if (t.isMilestone) {
             const cx = x(v.baselineStart) + pxPerDay / 2;
             const cy = y + ROW_HEIGHT - 6;
@@ -354,8 +362,8 @@ export function Gantt({ result }: Props) {
         })}
 
       {/* Barras */}
-      {result.order.map((t) => {
-        const y = rowY(t.row);
+      {rows.map((t) => {
+        const y = rowY(t.id);
         const x0 = x(t.start);
         const x1 = xEnd(t.finish);
         const w = Math.max(x1 - x0, 2);
@@ -421,12 +429,12 @@ export function Gantt({ result }: Props) {
         <g className="gantt-ghost" pointerEvents="none">
           <rect
             x={x(ghost.start)}
-            y={rowY(dragging.row) + (ROW_HEIGHT - BAR_H) / 2}
+            y={rowY(dragging.id) + (ROW_HEIGHT - BAR_H) / 2}
             width={Math.max(xEnd(ghost.finish) - x(ghost.start), 2)}
             height={BAR_H}
             rx={2}
           />
-          <text x={x(ghost.start)} y={rowY(dragging.row) - 2}>
+          <text x={x(ghost.start)} y={rowY(dragging.id) - 2}>
             {drag!.kind === 'move' ? `${fmt(ghost.start)} → ${fmt(ghost.finish)}` : `${ghost.durationDays} d · fin ${fmt(ghost.finish)}`}
           </text>
         </g>
