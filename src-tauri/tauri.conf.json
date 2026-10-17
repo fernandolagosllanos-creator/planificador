@@ -27,13 +27,20 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["msi", "nsis", "dmg", "app"],
+    "targets": [
+      "msi",
+      "nsis",
+      "dmg",
+      "app"
+    ],
     "category": "Productivity",
     "shortDescription": "Planificación de proyectos con carta Gantt",
     "longDescription": "Aplicación de escritorio para planificar proyectos: tareas, subtareas, dependencias, hitos y carta Gantt. Los proyectos se guardan como archivos .planif.",
     "fileAssociations": [
       {
-        "ext": ["planif"],
+        "ext": [
+          "planif"
+        ],
         "name": "Proyecto Planificador",
         "description": "Proyecto de Planificador",
         "role": "Editor"
@@ -45,6 +52,34 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true,
+    "windows": {
+      "nsis": {
+        "languages": [
+          "Spanish",
+          "English"
+        ],
+        "displayLanguageSelector": false,
+        "installMode": "currentUser"
+      },
+      "wix": {
+        "language": "es-ES"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUwMEYzMUVDRTY2MDhDMzgKUldRNGpHRG03REVQNE5rMGlPVU53Z0Z0K3FNS0ZMOW5MTnkwOUVHcFVkVGNCc0ZUT1VKMHQyaEIK",
+      "endpoints": [
+        "https://github.com/fernandolagosllanos-creator/planificador/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

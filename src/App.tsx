@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Gantt } from './components/Gantt';
 import { ResourceLoad } from './components/ResourceLoad';
 import { ResourceSheet } from './components/ResourceSheet';
@@ -8,6 +8,8 @@ import { Toolbar } from './components/Toolbar';
 import { schedule } from './engine/schedule';
 import { autosave, isTauri, loadAutosave, saveProjectFile } from './file/planif';
 import { useProject } from './store/project';
+import { promptForUpdate } from './updater';
+import { APP_VERSION } from './file/planif';
 import { WorkCalendar } from './engine/calendar';
 import { projectProgress } from './engine/tracking';
 
@@ -20,6 +22,12 @@ export default function App() {
   }, [result, s.project.calendars, s.project.calendarId, s.project.statusDate]);
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
+
+  // Buscar actualizaciones al iniciar (solo en la aplicación de escritorio, sin molestar si no hay).
+  const [updateMsg, setUpdateMsg] = useState<string | null>(null);
+  useEffect(() => {
+    if (isTauri()) void promptForUpdate(true, setUpdateMsg);
+  }, []);
 
   // Restaurar el autoguardado del navegador la primera vez (modo desarrollo).
   useEffect(() => {
@@ -115,6 +123,18 @@ export default function App() {
         </span>
         <span>{s.project.baseline ? `Línea base: ${fmt(s.project.baseline.savedAt.slice(0, 10))}` : 'Sin línea base'}</span>
         <span>{s.filePath ? s.filePath : 'Sin guardar en archivo'}</span>
+        <span>
+          v{APP_VERSION}
+          {isTauri() && (
+            <>
+              {' · '}
+              <button className="link" onClick={() => promptForUpdate(false, setUpdateMsg)} title="Comprobar si hay una versión nueva">
+                buscar actualizaciones
+              </button>
+            </>
+          )}
+          {updateMsg && <> · {updateMsg}</>}
+        </span>
         <span className="hint">
           Doble clic para editar · Arrastra una barra para moverla, su borde derecho para alargarla y el punto de un extremo hasta otra barra para
           vincular

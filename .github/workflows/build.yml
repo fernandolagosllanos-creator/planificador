@@ -1,6 +1,12 @@
 # Compila los instaladores de Windows y Mac.
 # - En cada push a main: pruebas + compilación de verificación (sin publicar).
-# - Al crear una etiqueta v* (por ejemplo v0.1.0): publica un GitHub Release con los instaladores.
+# - Al crear una etiqueta v* (por ejemplo v0.1.0): publica un GitHub Release con los
+#   instaladores, los paquetes de actualización firmados y el manifiesto latest.json
+#   que usa el actualizador automático de la aplicación.
+#
+# Secretos necesarios en el repositorio:
+#   TAURI_SIGNING_PRIVATE_KEY           clave privada de firma de actualizaciones
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  su contraseña (puede ser vacía)
 name: Compilar instaladores
 
 on:
@@ -17,10 +23,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm test
+      - run: npm run lint
       - run: npm run build
 
   instaladores:
@@ -45,7 +52,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -57,13 +64,22 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           # Solo publica un Release cuando el push es una etiqueta v*.
           tagName: ${{ startsWith(github.ref, 'refs/tags/v') && 'v__VERSION__' || '' }}
           releaseName: ${{ startsWith(github.ref, 'refs/tags/v') && 'Planificador v__VERSION__' || '' }}
-          releaseBody: 'Instaladores de Planificador. Windows: archivo .msi o -setup.exe. Mac: archivo .dmg (Apple Silicon o Intel según tu equipo).'
+          releaseBody: |
+            Instaladores de Planificador.
+            - Windows: `Planificador_x.y.z_x64-setup.exe` (o el `.msi`).
+            - Mac con chip Apple (M1 en adelante): `Planificador_x.y.z_aarch64.dmg`.
+            - Mac con Intel: `Planificador_x.y.z_x64.dmg`.
+
+            Las apps no están firmadas con certificado: en Mac la primera vez ábrela con clic derecho → Abrir; en Windows, "Más información → Ejecutar de todas formas". Las versiones siguientes se instalan solas desde la aplicación.
           releaseDraft: false
           prerelease: false
+          includeUpdaterJson: true
           args: ${{ matrix.args }}
       - name: Guardar instaladores como artefactos del flujo
         uses: actions/upload-artifact@v4

@@ -4,7 +4,9 @@ import { PLANIF_FORMAT, PLANIF_SCHEMA_VERSION } from '../model/types';
 import { schedule } from '../engine/schedule';
 import { normalizeProject } from '../model/migrate';
 
-export const APP_VERSION = '0.1.0';
+import pkg from '../../package.json';
+
+export const APP_VERSION: string = pkg.version;
 export const FILE_EXTENSION = 'planif';
 
 interface PlanifDocument {
