@@ -5,7 +5,7 @@ Aplicaciones de escritorio (Windows y Mac) para planificar proyectos con carta G
 Dos productos salen de este repositorio:
 
 - **Planificador simple** (`apps/simple`): el planificador de siempre.
-- **Planificador Jira** (`apps/jira`): el mismo planificador, conectado con Jira Cloud. Se configura una cuenta (correo + token de API, guardados en el llavero del sistema), se elige un proyecto de Jira y se vincula con el proyecto del planificador. En la etapa 2 ya conecta, vincula el proyecto y lista sus incidencias; alinear tareas con incidencias, el tablero simplificado y la escritura de estados, comentarios y fechas llegan en las etapas siguientes.
+- **Planificador Jira** (`apps/jira`): el mismo planificador, conectado con Jira Cloud. Se configura una cuenta (correo + token de API, guardados en el llavero del sistema), se elige un proyecto de Jira y se vincula con el proyecto del planificador. Conecta, vincula el proyecto, lista sus incidencias y, en la vista "Alinear", enlaza cada tarea con su incidencia base (manda estado y responsable) y sus dependientes (informan avance), con sugerencias automáticas por nombre y la opción de tomar el avance desde Jira. El tablero simplificado y la escritura de estados, comentarios y fechas en Jira llegan en las etapas siguientes.
 
 ## Qué hace (versión 1)
 
@@ -116,6 +116,8 @@ apps/jira/                  Planificador Jira
   src/jira/store.ts         Estado de la conexión (Zustand)
   src/jira/ConnectDialog.tsx  Asistente: cuenta → proyecto → campos de fecha
   src/jira/JiraView.tsx     Incidencias del proyecto vinculado
+  src/jira/AlignView.tsx    Vista Alinear: tarea ↔ incidencia base y dependientes
+  src/jira/links.ts         Lógica de los vínculos y sugerencias por nombre (con pruebas)
   src-tauri/src/lib.rs      Credenciales en el llavero y llamadas a Jira
 updates/jira/latest.json    Manifiesto de actualización de Planificador Jira (lo escribe el flujo)
 .github/workflows/          Compilación de instaladores y publicación
