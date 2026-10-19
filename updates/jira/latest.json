@@ -1,35 +1,35 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "notes": "Instaladores de Planificador Jira.\n- Windows: `..._x.y.z_x64-setup.exe` (o el `.msi`).\n- Mac con chip Apple (M1 en adelante): `..._x.y.z_aarch64.dmg`.\n- Mac con Intel: `..._x.y.z_x64.dmg`.\n\nLas apps no están firmadas con certificado: en Mac la primera vez ábrela con clic derecho → Abrir; en Windows, \"Más información → Ejecutar de todas formas\". Las versiones siguientes se instalan solas desde la aplicación.",
-  "pub_date": "2026-10-19T13:40:44.196Z",
+  "pub_date": "2026-10-19T14:12:11.515Z",
   "platforms": {
-    "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNEpnM0UzN08vcjdjenhINGhXbDYrcjFldVdJSTExU3JPWWNvN1VaWE1UQ0M2YzN5bTJPeHNNUDZlUmtZbHFuUzZpcitLUnF2akoxZXh0cHl0cGZVL0FjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE3MDg2CWZpbGU6UGxhbmlmaWNhZG9yIEppcmFfMC4yLjBfeDY0X2VzLUVTLm1zaQl2ZXJzaW9uOjAuMi4wCm0vd0tFTUxVNEY5MFdkK3psMm8xaXJtb3NONFlQZ3lFUGpKNmIxK1h1enN1RDI1cnpjZWtBdHNVdVZ5blg5YzBnNFlZenBRMGQ0V2t5VGV3KzNPZkRBPT0K",
-      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.2.0/Planificador.Jira_0.2.0_x64_es-ES.msi"
-    },
-    "windows-x86_64-msi": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNEpnM0UzN08vcjdjenhINGhXbDYrcjFldVdJSTExU3JPWWNvN1VaWE1UQ0M2YzN5bTJPeHNNUDZlUmtZbHFuUzZpcitLUnF2akoxZXh0cHl0cGZVL0FjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE3MDg2CWZpbGU6UGxhbmlmaWNhZG9yIEppcmFfMC4yLjBfeDY0X2VzLUVTLm1zaQl2ZXJzaW9uOjAuMi4wCm0vd0tFTUxVNEY5MFdkK3psMm8xaXJtb3NONFlQZ3lFUGpKNmIxK1h1enN1RDI1cnpjZWtBdHNVdVZ5blg5YzBnNFlZenBRMGQ0V2t5VGV3KzNPZkRBPT0K",
-      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.2.0/Planificador.Jira_0.2.0_x64_es-ES.msi"
-    },
-    "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNE1pN21CbEpRb2YzNWVaVSs0UGtJRERCc0pYRkRVdkUwdC9Kb3puZnhGSUptNFllRFFKZFpCWFFYL0tNekpwTFcrVkIyR282SHlQdkxndlRuYVd0a3drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE3MDg2CWZpbGU6UGxhbmlmaWNhZG9yIEppcmFfMC4yLjBfeDY0LXNldHVwLmV4ZQl2ZXJzaW9uOjAuMi4wCi9jWDlLZk91OHlGN2RIV2xWU0ZkVXBhL3FaemJDNCtPT2txcEpJdDNyMHF3NVIwa3dWeTZTZjUzMFVnaE1ic0lnYlRIL2duQUJCZXNHMjQxZTN0c0FRPT0K",
-      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.2.0/Planificador.Jira_0.2.0_x64-setup.exe"
-    },
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNElnT1dnT3hORXZnV3B6ZE83QitTTE1JM3NmazhwVWo4TkdvQmVINFF6a200MnQ5ZWRUN0VuTmkyMWZsdVNEWGMxbmYzeVdLNmJjNzVHR1phZERRaEFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE3MDk5CWZpbGU6UGxhbmlmaWNhZG9yIEppcmEuYXBwLnRhci5negl2ZXJzaW9uOjAuMi4wClVTcE1jQkpUNVpTcitDdWU5SHFnc3NObHZOeFR1dzhjMUMrSXJSN0UvSzlLWkROSjFxY1IwT2ZoT3l3MVhudWZsdmczWDBNbWx3eUliQlVPNmdJbkR3PT0K",
-      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.2.0/Planificador.Jira_x64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNFBDQkxYU21RVDZHS2xjQVR3L2VFWDFyaGdDWVBLRUlkMVZnd1ppUjRqbFlzUFBBREN5SXVheVNMWkNNK01yUVFXMEJ3aVZMbWF5RC9KZU9DcGJPQ1EwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE5MDE1CWZpbGU6UGxhbmlmaWNhZG9yIEppcmEuYXBwLnRhci5negl2ZXJzaW9uOjAuMy4wCnhGZVh3M280TDJJUEhJeEJHY29Pc0w1d3A0Vkt4MElvdjdzWGFiUmxzcUk5ZytEVFpLZnN6M05EMTRkSmxBeVRlVHlFNUJIdWpHRG9wZHY1NjdxakNBPT0K",
+      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.3.0/Planificador.Jira_x64.app.tar.gz"
     },
     "darwin-x86_64-app": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNElnT1dnT3hORXZnV3B6ZE83QitTTE1JM3NmazhwVWo4TkdvQmVINFF6a200MnQ5ZWRUN0VuTmkyMWZsdVNEWGMxbmYzeVdLNmJjNzVHR1phZERRaEFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE3MDk5CWZpbGU6UGxhbmlmaWNhZG9yIEppcmEuYXBwLnRhci5negl2ZXJzaW9uOjAuMi4wClVTcE1jQkpUNVpTcitDdWU5SHFnc3NObHZOeFR1dzhjMUMrSXJSN0UvSzlLWkROSjFxY1IwT2ZoT3l3MVhudWZsdmczWDBNbWx3eUliQlVPNmdJbkR3PT0K",
-      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.2.0/Planificador.Jira_x64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNFBDQkxYU21RVDZHS2xjQVR3L2VFWDFyaGdDWVBLRUlkMVZnd1ppUjRqbFlzUFBBREN5SXVheVNMWkNNK01yUVFXMEJ3aVZMbWF5RC9KZU9DcGJPQ1EwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE5MDE1CWZpbGU6UGxhbmlmaWNhZG9yIEppcmEuYXBwLnRhci5negl2ZXJzaW9uOjAuMy4wCnhGZVh3M280TDJJUEhJeEJHY29Pc0w1d3A0Vkt4MElvdjdzWGFiUmxzcUk5ZytEVFpLZnN6M05EMTRkSmxBeVRlVHlFNUJIdWpHRG9wZHY1NjdxakNBPT0K",
+      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.3.0/Planificador.Jira_x64.app.tar.gz"
     },
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNEhQanRsVGZERHg5UWVIVGFkYkE5aDFwbk1sYytqc1JIbHZOZVk2aFRpZkpDL0RZS1IvZTV1RDE4WW1WbEFyaUovYjJIRWltY3NWeGh5MkZ2Ry9PdVFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE3MjM5CWZpbGU6UGxhbmlmaWNhZG9yIEppcmEuYXBwLnRhci5negl2ZXJzaW9uOjAuMi4wCnU1b2ZhSWJEUEErVzI5VG1IbzdHc3g1YU40aVNyVTNPR3VFa0xMTlNtU2k5a0ozOG0wd0QvZzZBZmprVzdFRk5FK3c5NlhjWDdDblQ2YStRSG1jbUNnPT0K",
-      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.2.0/Planificador.Jira_aarch64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNFArZEpPanhMOFVVWVQ1M2c0Um1hVFdUUXJKdUFkc2NJaFNYTVBwbnAwdzVvOEd5NitySExPYThKanI0QnhUSEYzMW02OFh5YTkvYzI1UGMrK2FqcHdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE5MDkwCWZpbGU6UGxhbmlmaWNhZG9yIEppcmEuYXBwLnRhci5negl2ZXJzaW9uOjAuMy4wClA5UmVPWTZVT3RiU1NuajNrN002U3NDc212SDdzM05ETUw3VlVmUjk4ckx0elhrc2wxZ0htRmdiajU3d2grY0xuMXRRdHZ5NmNmWE5Tbzl1RExUK0F3PT0K",
+      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.3.0/Planificador.Jira_aarch64.app.tar.gz"
     },
     "darwin-aarch64-app": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNEhQanRsVGZERHg5UWVIVGFkYkE5aDFwbk1sYytqc1JIbHZOZVk2aFRpZkpDL0RZS1IvZTV1RDE4WW1WbEFyaUovYjJIRWltY3NWeGh5MkZ2Ry9PdVFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE3MjM5CWZpbGU6UGxhbmlmaWNhZG9yIEppcmEuYXBwLnRhci5negl2ZXJzaW9uOjAuMi4wCnU1b2ZhSWJEUEErVzI5VG1IbzdHc3g1YU40aVNyVTNPR3VFa0xMTlNtU2k5a0ozOG0wd0QvZzZBZmprVzdFRk5FK3c5NlhjWDdDblQ2YStRSG1jbUNnPT0K",
-      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.2.0/Planificador.Jira_aarch64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNFArZEpPanhMOFVVWVQ1M2c0Um1hVFdUUXJKdUFkc2NJaFNYTVBwbnAwdzVvOEd5NitySExPYThKanI0QnhUSEYzMW02OFh5YTkvYzI1UGMrK2FqcHdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE5MDkwCWZpbGU6UGxhbmlmaWNhZG9yIEppcmEuYXBwLnRhci5negl2ZXJzaW9uOjAuMy4wClA5UmVPWTZVT3RiU1NuajNrN002U3NDc212SDdzM05ETUw3VlVmUjk4ckx0elhrc2wxZ0htRmdiajU3d2grY0xuMXRRdHZ5NmNmWE5Tbzl1RExUK0F3PT0K",
+      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.3.0/Planificador.Jira_aarch64.app.tar.gz"
+    },
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNElNb250WGxGeTlBU1lBbEl4U2FvdWM4Z3dGRVFQc295cFVvUmtjNzlMTXlsR0k5L1gydExTMkRyNGFQdHRtTGdFRFNGYTZ2RGllRjlrVnRZWmFsREFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE5MTI3CWZpbGU6UGxhbmlmaWNhZG9yIEppcmFfMC4zLjBfeDY0X2VzLUVTLm1zaQl2ZXJzaW9uOjAuMy4wCnc5NEJPNWdYNk1rYnpGcVpLZEd6enQwSnhVQmgvQzIwN2NEcE5lOEpiSVoyTzdLWGZqVUtzSC9JeEVkcnBraUplS0l6RkNxRUhaYVFEYlcwRUdaTENRPT0K",
+      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.3.0/Planificador.Jira_0.3.0_x64_es-ES.msi"
+    },
+    "windows-x86_64-msi": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNElNb250WGxGeTlBU1lBbEl4U2FvdWM4Z3dGRVFQc295cFVvUmtjNzlMTXlsR0k5L1gydExTMkRyNGFQdHRtTGdFRFNGYTZ2RGllRjlrVnRZWmFsREFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE5MTI3CWZpbGU6UGxhbmlmaWNhZG9yIEppcmFfMC4zLjBfeDY0X2VzLUVTLm1zaQl2ZXJzaW9uOjAuMy4wCnc5NEJPNWdYNk1rYnpGcVpLZEd6enQwSnhVQmgvQzIwN2NEcE5lOEpiSVoyTzdLWGZqVUtzSC9JeEVkcnBraUplS0l6RkNxRUhaYVFEYlcwRUdaTENRPT0K",
+      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.3.0/Planificador.Jira_0.3.0_x64_es-ES.msi"
+    },
+    "windows-x86_64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNGpHRG03REVQNEUyN0Z2Rm1PSnd3VGxUamUyRVpkdGFoVER3SFo1NEdvRUZaMElHenpaRE9IMm1LVGxnMFJDYkVMb2g1ZWhvcVNBcmx2Vmx6SE9rYU52Qm85RkU3TFFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE5MTI3CWZpbGU6UGxhbmlmaWNhZG9yIEppcmFfMC4zLjBfeDY0LXNldHVwLmV4ZQl2ZXJzaW9uOjAuMy4wCnF6dnIrcmhxTENlTFZjdERjQ2NzQkl5em9ESGlEUWdSclludUJJQkRjYUg5T3BPVndyWHNaWXdDVXpYS1VXVkxLcjJ4MXBzdGhiU0daMGo0M1ZyNERRPT0K",
+      "url": "https://github.com/fernandolagosllanos-creator/planificador/releases/download/jira-v0.3.0/Planificador.Jira_0.3.0_x64-setup.exe"
     }
   }
 }
