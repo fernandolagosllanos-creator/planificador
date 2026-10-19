@@ -14,6 +14,8 @@ export * from './file/report';
 export * from './store/project';
 export * from './updater';
 export * from './components/layout';
+export { AppShell, type AppShellProps } from './components/AppShell';
+export { Toolbar, Menu, type ToolbarProps } from './components/Toolbar';
 export { CalendarDialog } from './components/CalendarDialog';
 export { Gantt } from './components/Gantt';
 export { ResourceLoad } from './components/ResourceLoad';

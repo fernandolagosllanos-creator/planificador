@@ -7,7 +7,14 @@ import { takeBaseline } from '../engine/tracking';
 import { groupTasks, linkedComponent, moveTaskBefore, ungroupTask } from '../engine/outline';
 
 export type Zoom = 'day' | 'week' | 'month';
-export type View = 'gantt' | 'resources' | 'load';
+/** Vistas del núcleo; una app puede añadir las suyas (por ejemplo 'align' en Planificador Jira). */
+export type View = 'gantt' | 'resources' | 'load' | (string & {});
+/** Vistas que trae el Planificador simple; cada app puede añadir las suyas. */
+export const BASE_VIEWS: [View, string][] = [
+  ['gantt', 'Gantt'],
+  ['resources', 'Recursos'],
+  ['load', 'Carga'],
+];
 
 function uid(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto

@@ -138,6 +138,34 @@ export interface Baseline {
   tasks: Record<string, BaselineEntry>;
 }
 
+/** Vínculo de una tarea con Jira: una incidencia base (manda) y sus dependientes. */
+export interface JiraTaskLink {
+  taskId: string;
+  /** Clave de la incidencia base, por ejemplo B1-231. */
+  base: string;
+  dependents: string[];
+}
+
+/**
+ * Sección opcional del `.planif` que usa Planificador Jira. El Planificador simple la
+ * ignora y la conserva al guardar. Nunca contiene credenciales.
+ */
+export interface JiraLink {
+  /** URL del sitio, por ejemplo https://miempresa.atlassian.net */
+  siteUrl: string;
+  projectKey: string;
+  projectName: string;
+  /** Tablero de Jira Software del proyecto, si tiene. */
+  boardId: number | null;
+  /** Campo de Jira donde se escribe la fecha de inicio planificada (customfield_…), o null para no escribirla. */
+  startDateField: string | null;
+  /** Campo donde se escribe la fecha de fin planificada; normalmente `duedate`. */
+  dueDateField: string;
+  links: JiraTaskLink[];
+  /** Última sincronización con Jira (ISO 8601), o null si nunca. */
+  lastSync: string | null;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -152,6 +180,8 @@ export interface Project {
   dependencies: Dependency[];
   resources: Resource[];
   assignments: Assignment[];
+  /** Solo Planificador Jira; ausente o null en proyectos sin vincular. */
+  jira?: JiraLink | null;
 }
 
 /** Resultado del cálculo de programación para una tarea. */
