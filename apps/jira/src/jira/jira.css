@@ -324,3 +324,151 @@
   display: flex;
   gap: 4px;
 }
+
+/* Tablero simplificado */
+.board-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  overflow: hidden;
+}
+.board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.board-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.board-filters input,
+.board-filters select {
+  font: inherit;
+  padding: 5px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.board-filters input {
+  width: 220px;
+}
+.board {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.board-column {
+  flex: 1 1 0;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 0;
+}
+.board-column.over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.board-column-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.board-column-head h3 {
+  margin: 0;
+  font-size: 13px;
+}
+.board-column.cat-done .board-column-head h3 {
+  color: #166534;
+}
+.board-column.cat-indeterminate .board-column-head h3 {
+  color: #1e40af;
+}
+.board-cards {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.board-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.board-card.base {
+  border-color: var(--accent);
+  border-width: 1.5px;
+}
+.board-card.moving {
+  opacity: 0.6;
+  cursor: progress;
+}
+.board-card-line {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+.board-card-summary {
+  font-size: 13px;
+}
+.board-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.board-card-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.board-card .menu-list {
+  left: auto;
+  right: 0;
+  min-width: 160px;
+}
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: #1e3a8a;
+  font-size: 10px;
+  font-weight: 600;
+}
+.avatar.empty {
+  background: var(--border);
+  color: var(--text-muted);
+}
+.board-drop {
+  border: 1px dashed var(--accent);
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+}
+.board-foot {
+  margin: 0;
+}
