@@ -189,3 +189,47 @@ function toIssue(raw: RawIssue, q: IssueQuery): JiraIssue {
     startDate: q.startDateField ? date(f[q.startDateField]) : null,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Estados y transiciones (tablero).
+// ---------------------------------------------------------------------------
+
+export interface JiraStatus {
+  id: string;
+  name: string;
+  category: 'new' | 'indeterminate' | 'done' | string;
+}
+
+export interface JiraTransition {
+  id: string;
+  name: string;
+  to: JiraStatus;
+  /** La transición abre una pantalla con campos (posiblemente obligatorios). */
+  hasScreen: boolean;
+}
+
+/** Estados posibles de las incidencias del proyecto (unión de todos sus tipos de incidencia). */
+export async function listStatuses(projectKey: string): Promise<JiraStatus[]> {
+  const types = await request<{ statuses: { id: string; name: string; statusCategory?: { key?: string } }[] }[]>(
+    'GET',
+    `/rest/api/3/project/${encodeURIComponent(projectKey)}/statuses`,
+  );
+  const byId = new Map<string, JiraStatus>();
+  for (const t of types) for (const s of t.statuses) byId.set(s.id, { id: s.id, name: s.name, category: s.statusCategory?.key ?? '' });
+  return [...byId.values()];
+}
+
+export async function listTransitions(key: string): Promise<JiraTransition[]> {
+  const res = await request<{ transitions: { id: string; name: string; hasScreen?: boolean; isAvailable?: boolean; to: { id: string; name: string; statusCategory?: { key?: string } } }[] }>(
+    'GET',
+    `/rest/api/3/issue/${encodeURIComponent(key)}/transitions`,
+  );
+  return res.transitions
+    .filter((t) => t.isAvailable !== false)
+    .map((t) => ({ id: t.id, name: t.name, hasScreen: !!t.hasScreen, to: { id: t.to.id, name: t.to.name, category: t.to.statusCategory?.key ?? '' } }));
+}
+
+/** Ejecuta una transición (cambio de estado) de la incidencia en Jira. */
+export async function transitionIssue(key: string, transitionId: string): Promise<void> {
+  await request('POST', `/rest/api/3/issue/${encodeURIComponent(key)}/transitions`, undefined, { transition: { id: transitionId } });
+}

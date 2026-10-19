@@ -116,8 +116,8 @@ export function JiraView() {
         </table>
       </div>
       <p className="muted small jira-foot">
-        En la vista "Alinear" se vincula cada tarea con su incidencia base y sus dependientes. El tablero simplificado y la escritura de estados,
-        comentarios y fechas llegan en las etapas siguientes.
+        En la vista "Alinear" se vincula cada tarea con su incidencia base y sus dependientes; en "Tablero" se cambian los estados. Comentarios y
+        fechas planificadas llegan en la etapa 5.
       </p>
     </div>
   );

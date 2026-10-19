@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { useProject, type JiraLink } from '@planificador/core';
 import * as jira from './client';
 import { addDependent, removeIssue, setBase, suggestLinks, unlinkTask, type Suggestion } from './links';
+import { transitionTo } from './board';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -12,6 +13,10 @@ export interface JiraState {
   error: string | null;
   issues: jira.JiraIssue[];
   loadingIssues: boolean;
+  /** Estados del proyecto vinculado (columnas del tablero). */
+  statuses: jira.JiraStatus[];
+  /** Claves de incidencias cuyo cambio de estado está en curso. */
+  moving: Set<string>;
   showConnect: boolean;
 
   /** Al iniciar: si hay credenciales en el llavero, comprueba la sesión. */
@@ -22,6 +27,8 @@ export interface JiraState {
   /** Guarda (o quita) el vínculo del proyecto abierto con un proyecto de Jira. */
   linkProject: (link: JiraLink | null) => void;
   refreshIssues: () => Promise<void>;
+  /** Cambia el estado de una incidencia en Jira moviéndola a la columna `target` del tablero. */
+  moveIssue: (key: string, target: jira.JiraStatus) => Promise<void>;
 
   /** Vínculos tarea ↔ incidencia (se guardan en el .planif, con deshacer). */
   setBase: (taskId: string, key: string) => void;
@@ -52,6 +59,8 @@ export const useJira = create<JiraState>((set, get) => ({
   error: null,
   issues: [],
   loadingIssues: false,
+  statuses: [],
+  moving: new Set(),
   showConnect: false,
 
   init: async () => {
@@ -80,14 +89,45 @@ export const useJira = create<JiraState>((set, get) => ({
 
   disconnect: async () => {
     await jira.forget();
-    set({ status: 'disconnected', account: null, user: null, error: null, issues: [] });
+    set({ status: 'disconnected', account: null, user: null, error: null, issues: [], statuses: [] });
   },
 
   setShowConnect: (showConnect) => set({ showConnect }),
 
   linkProject: (link) => {
     useProject.getState().mutate((p) => void (p.jira = link));
-    set({ issues: [] });
+    set({ issues: [], statuses: [] });
+  },
+
+  moveIssue: async (key, target) => {
+    const issue = get().issues.find((i) => i.key === key);
+    if (!issue || issue.status === target.name || get().moving.has(key)) return;
+    const link = useProject.getState().project.jira;
+    const setError = useProject.getState().setError;
+    set({ moving: new Set([...get().moving, key]) });
+    try {
+      const transitions = await jira.listTransitions(key);
+      const tr = transitionTo(transitions, target);
+      if (!tr) {
+        const names = transitions.map((t) => `"${t.to.name}"`).join(', ');
+        setError(`Jira no permite pasar ${key} de "${issue.status}" a "${target.name}" directamente${names ? ` (solo a ${names})` : ''}.`);
+        return;
+      }
+      if (tr.hasScreen) {
+        // La transición pide campos en una pantalla de Jira: se termina allí.
+        setError(`La transición "${tr.name}" de ${key} pide datos en Jira; se abre la incidencia en el navegador para completarla.`);
+        if (link) window.open(`${link.siteUrl}/browse/${key}`, '_blank');
+        return;
+      }
+      await jira.transitionIssue(key, tr.id);
+      set({ issues: get().issues.map((i) => (i.key === key ? { ...i, status: tr.to.name, statusCategory: tr.to.category } : i)) });
+    } catch (e) {
+      setError(`No se pudo cambiar el estado de ${key}: ${(e as Error).message}`);
+    } finally {
+      const moving = new Set(get().moving);
+      moving.delete(key);
+      set({ moving });
+    }
   },
 
   setBase: (taskId, key) => editLinks((links) => setBase(links, taskId, key)),
@@ -110,8 +150,11 @@ export const useJira = create<JiraState>((set, get) => ({
     if (!link || get().status !== 'connected') return;
     set({ loadingIssues: true });
     try {
-      const issues = await jira.listIssues({ projectKey: link.projectKey, startDateField: link.startDateField, dueDateField: link.dueDateField });
-      set({ issues, loadingIssues: false });
+      const [issues, statuses] = await Promise.all([
+        jira.listIssues({ projectKey: link.projectKey, startDateField: link.startDateField, dueDateField: link.dueDateField }),
+        jira.listStatuses(link.projectKey).catch(() => get().statuses),
+      ]);
+      set({ issues, statuses, loadingIssues: false });
     } catch (e) {
       set({ loadingIssues: false });
       useProject.getState().setError(`No se pudieron leer las incidencias de Jira: ${(e as Error).message}`);
