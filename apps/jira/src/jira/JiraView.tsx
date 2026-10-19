@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useProject } from '@planificador/core';
+import { usedKeys } from './links';
 import { useJira } from './store';
 
 function fmt(iso: string | null): string {
@@ -49,7 +50,8 @@ export function JiraView() {
     );
   }
 
-  const linked = new Set(link.links.flatMap((l) => [l.base, ...l.dependents]));
+  const used = usedKeys(link);
+  const rowOf = new Map(useProject.getState().project.tasks.map((t, i) => [t.id, i + 1]));
 
   return (
     <div className="jira-view">
@@ -81,7 +83,7 @@ export function JiraView() {
               <th>Responsable</th>
               <th>Inicio</th>
               <th>Fin</th>
-              <th>Vinculada</th>
+              <th>Tarea</th>
             </tr>
           </thead>
           <tbody>
@@ -100,7 +102,7 @@ export function JiraView() {
                 <td>{i.assignee ?? <span className="muted">Sin asignar</span>}</td>
                 <td>{fmt(i.startDate)}</td>
                 <td>{fmt(i.dueDate)}</td>
-                <td>{linked.has(i.key) ? '✓' : ''}</td>
+                <td>{used.has(i.key) ? `#${rowOf.get(used.get(i.key)!) ?? '?'}` : ''}</td>
               </tr>
             ))}
             {!j.loadingIssues && j.issues.length === 0 && (
@@ -114,8 +116,8 @@ export function JiraView() {
         </table>
       </div>
       <p className="muted small jira-foot">
-        Etapa 2: conexión y lectura. Alinear tareas con incidencias, el tablero simplificado y la escritura de estados, comentarios y fechas llegan en
-        las etapas siguientes.
+        En la vista "Alinear" se vincula cada tarea con su incidencia base y sus dependientes. El tablero simplificado y la escritura de estados,
+        comentarios y fechas llegan en las etapas siguientes.
       </p>
     </div>
   );

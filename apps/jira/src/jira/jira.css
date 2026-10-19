@@ -156,3 +156,171 @@
 .jira-status {
   cursor: pointer;
 }
+
+/* Vista "Alinear" */
+.align-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.align-table {
+  flex: 0 0 56%;
+  min-width: 0;
+  overflow: auto;
+  border-right: 3px solid var(--border-strong);
+}
+.align-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.align-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-alt);
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border-strong);
+  border-right: 1px solid var(--border);
+}
+.align-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+.align-table .num {
+  text-align: right;
+  width: 40px;
+}
+.align-table tr {
+  cursor: pointer;
+}
+.align-table tr.summary td {
+  background: var(--bg-alt);
+  font-weight: 600;
+}
+.align-table tr.selected td {
+  background: var(--accent-soft);
+}
+.align-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  overflow: auto;
+}
+.align-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.align-panel .actions {
+  display: flex;
+  gap: 6px;
+}
+.align-task h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+.align-task p {
+  margin: 8px 0 4px;
+}
+.drop-zone {
+  min-height: 34px;
+  padding: 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.drop-zone.dependents {
+  margin-left: 12px;
+  border-left: 2px dashed var(--border-strong);
+}
+.issue-card {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+.issue-card.base {
+  border-color: var(--accent);
+  border-width: 1.5px;
+}
+.issue-card.missing {
+  border-color: var(--error-text);
+  background: var(--error-bg);
+}
+.issue-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.issue-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.issue-key {
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.issue-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  flex: 1;
+}
+.issue-picker-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.issue-picker-head input[type='text'],
+.issue-picker-head input:not([type]) {
+  flex: 1;
+  font: inherit;
+  padding: 5px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.issue-list {
+  flex: 1;
+  min-height: 120px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+.issue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: grab;
+  font-size: 12px;
+}
+.issue-item:hover {
+  background: var(--bg-alt);
+}
+.issue-actions {
+  display: flex;
+  gap: 4px;
+}

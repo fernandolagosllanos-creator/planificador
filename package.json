@@ -10,7 +10,7 @@
     "dev": "npm run dev -w apps/simple",
     "dev:jira": "npm run dev -w apps/jira",
     "build": "npm run build -w apps/simple && npm run build -w apps/jira",
-    "test": "npm test -w packages/core",
+    "test": "npm test -w packages/core && npm test -w apps/jira",
     "lint": "oxlint",
     "typecheck": "npm run typecheck -w packages/core && npm run typecheck -w apps/simple && npm run typecheck -w apps/jira",
     "tauri": "npm run tauri -w apps/simple --",

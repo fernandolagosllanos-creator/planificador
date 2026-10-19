@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { useProject, type JiraLink } from '@planificador/core';
 import * as jira from './client';
+import { addDependent, removeIssue, setBase, suggestLinks, unlinkTask, type Suggestion } from './links';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -21,6 +22,27 @@ export interface JiraState {
   /** Guarda (o quita) el vínculo del proyecto abierto con un proyecto de Jira. */
   linkProject: (link: JiraLink | null) => void;
   refreshIssues: () => Promise<void>;
+
+  /** Vínculos tarea ↔ incidencia (se guardan en el .planif, con deshacer). */
+  setBase: (taskId: string, key: string) => void;
+  addDependent: (taskId: string, key: string) => void;
+  removeIssue: (key: string) => void;
+  unlinkTask: (taskId: string) => void;
+  /** Sugerencias por nombre para las tareas hoja sin vincular. */
+  suggestions: () => Suggestion[];
+  applySuggestions: (list: Suggestion[]) => void;
+}
+
+/** Aplica un cambio a la lista de vínculos del proyecto abierto (registrado en deshacer). */
+function editLinks(fn: (links: JiraLink['links']) => JiraLink['links']): void {
+  const st = useProject.getState();
+  if (!st.project.jira) {
+    st.setError('Primero vincula este proyecto con un proyecto de Jira (menú Jira).');
+    return;
+  }
+  st.mutate((p) => {
+    if (p.jira) p.jira.links = fn(p.jira.links);
+  });
 }
 
 export const useJira = create<JiraState>((set, get) => ({
@@ -67,6 +89,21 @@ export const useJira = create<JiraState>((set, get) => ({
     useProject.getState().mutate((p) => void (p.jira = link));
     set({ issues: [] });
   },
+
+  setBase: (taskId, key) => editLinks((links) => setBase(links, taskId, key)),
+  addDependent: (taskId, key) => editLinks((links) => addDependent(links, taskId, key)),
+  removeIssue: (key) => editLinks((links) => removeIssue(links, key)),
+  unlinkTask: (taskId) => editLinks((links) => unlinkTask(links, taskId)),
+  suggestions: () => {
+    const p = useProject.getState().project;
+    return suggestLinks(p.tasks, get().issues, p.jira);
+  },
+  applySuggestions: (list) =>
+    editLinks((links) => {
+      let next = links;
+      for (const sug of list) next = setBase(next, sug.taskId, sug.key);
+      return next;
+    }),
 
   refreshIssues: async () => {
     const link = useProject.getState().project.jira;
